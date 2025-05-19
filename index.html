@@ -32,6 +32,10 @@
             
             --snaps-primary: #32cd32; /* Bright green */
             --snaps-secondary: #006400; /* Dark green */
+            
+            /* Neon colors for Snaps */
+            --snaps-neon: #39ff14; /* Bright neon green */
+            --snaps-neon-glow: 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 30px #39ff14;
         }
 
         * {
@@ -228,6 +232,23 @@
             font-size: 0.9rem;
             transition: all 0.3s ease;
         }
+        
+        /* GitHub troubleshooting message */
+        .troubleshoot-message {
+            display: none;
+            padding: 10px 15px;
+            background-color: rgba(255, 69, 0, 0.1);
+            border: 1px solid rgba(255, 69, 0, 0.5);
+            border-radius: 5px;
+            color: var(--light-gold);
+            margin-top: 10px;
+            font-size: 0.85rem;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .troubleshoot-message.show {
+            display: block;
+        }
 
         /* Volume Slider Styling */
         .volume-control {
@@ -301,7 +322,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 1.5rem;
-            position: relative; /* For snow positioning */
+            position: relative; /* For snow/petals positioning */
         }
 
         /* Character profiles and sections */
@@ -752,10 +773,11 @@
             background: linear-gradient(90deg, var(--flowey-primary), var(--flowey-secondary));
         }
 
-        /* Snaps (Green) */
+        /* Snaps (Green) with Neon effect */
         .character-snaps {
             border-color: var(--snaps-primary);
             background: linear-gradient(135deg, rgba(50, 205, 50, 0.1), rgba(0, 100, 0, 0.1));
+            position: relative;
         }
 
         .character-snaps .profile-image {
@@ -772,10 +794,47 @@
         .character-snaps .character-inventory,
         .character-snaps .character-magic {
             border-color: var(--snaps-primary);
+            position: relative; /* For neon borders */
         }
 
         .character-snaps .mana-bar {
             background: linear-gradient(90deg, var(--snaps-primary), var(--snaps-secondary));
+        }
+        
+        /* Neon effect for Snaps */
+        .neon-border {
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border: 3px solid var(--snaps-neon);
+            border-radius: 12px;
+            pointer-events: none;
+            box-shadow: var(--snaps-neon-glow);
+            animation: neonPulse 4s infinite;
+            z-index: 2;
+        }
+        
+        @keyframes neonPulse {
+            0% { opacity: 0.4; box-shadow: 0 0 5px var(--snaps-neon), 0 0 10px var(--snaps-neon); }
+            50% { opacity: 1; box-shadow: 0 0 10px var(--snaps-neon), 0 0 20px var(--snaps-neon), 0 0 30px var(--snaps-neon); }
+            100% { opacity: 0.4; box-shadow: 0 0 5px var(--snaps-neon), 0 0 10px var(--snaps-neon); }
+        }
+        
+        /* Enhanced Neon effect for Snaps */
+        .character-snaps {
+            position: relative;
+            overflow: visible;
+        }
+        
+        .character-snaps .character-stats,
+        .character-snaps .character-inventory,
+        .character-snaps .character-magic,
+        .character-snaps.character-profile {
+            position: relative;
+            overflow: visible;
+            z-index: 1;
         }
 
         /* Animation for state indicator */
@@ -938,6 +997,115 @@
             animation: sparkle 5s infinite linear;
             transform: rotate(25deg);
         }
+        
+        /* FLOWEY'S PETAL EFFECT */
+        /* Petal container */
+        .petal-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .petal-container.active {
+            opacity: 1;
+        }
+
+        /* Petal styles */
+        .petal {
+            position: absolute;
+            background-color: transparent;
+            opacity: 0.9;
+            animation-name: petalFall;
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+            color: var(--flowey-secondary);
+            font-size: 16px;
+        }
+        
+        /* Small petals */
+        .petal.small {
+            font-size: 10px;
+            animation-duration: 8s;
+        }
+
+        /* Medium petals */
+        .petal.medium {
+            font-size: 16px;
+            animation-duration: 12s;
+        }
+
+        /* Large petals */
+        .petal.large {
+            font-size: 20px;
+            animation-duration: 16s;
+        }
+        
+        /* Special golden petals */
+        .petal.golden {
+            color: var(--gold);
+            text-shadow: 0 0 5px var(--gold);
+        }
+
+        /* Petal fall animation */
+        @keyframes petalFall {
+            0% {
+                transform: translateY(-100px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.9;
+            }
+            30% {
+                transform: translateY(30vh) translateX(30px) rotate(120deg);
+            }
+            60% {
+                transform: translateY(60vh) translateX(-20px) rotate(240deg);
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) translateX(15px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Some petals with swaying movement */
+        @keyframes petalSway {
+            0% {
+                transform: translateY(-100px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.9;
+            }
+            30% {
+                transform: translateY(30vh) translateX(50px) rotate(180deg);
+            }
+            60% {
+                transform: translateY(60vh) translateX(-40px) rotate(360deg);
+            }
+            90% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) translateX(30px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .petal.sway {
+            animation-name: petalSway;
+        }
 
         @keyframes sparkle {
             0% { transform: rotate(25deg) translateX(-100%); }
@@ -1024,8 +1192,17 @@
             </div>
         </div>
         
+        <!-- Troubleshooting message for GitHub audio issue -->
+        <div id="troubleshoot-message" class="troubleshoot-message">
+            <i class="fas fa-exclamation-triangle"></i> 
+            Flowey's audio may not load on GitHub Pages due to CORS restrictions or file format. Try using a .mp3 format and check your path is correct (flowey.mp3 in the same directory).
+        </div>
+        
         <!-- Snow container for Yuki -->
         <div id="snow-container" class="snow-container"></div>
+        
+        <!-- Petal container for Flowey -->
+        <div id="petal-container" class="petal-container"></div>
         
         <!-- Audio elements (hidden) -->
         <audio id="blackjack-humility" src="humility.mp3" loop></audio>
@@ -1085,7 +1262,7 @@
             flowey: document.getElementById('flowey-audio')
         };
         
-        // Track current audio position
+        // Variables for music/theme control
         let currentAudioTime = 0;
         let lastActiveAudio = null;
         
@@ -1093,6 +1270,14 @@
         let blackjackMusicState = 'humility';
         let animationTimeoutId;
         let snowflakes = []; // To store snowflake elements
+        let petals = []; // To store petal elements
+        let crossfadeTimeoutId = null;
+        
+        // Flag to track if Flowey's audio failed to load
+        let floweyAudioFailed = false;
+        
+        // Audio crossfade duration in milliseconds
+        const CROSSFADE_DURATION = 3000;
         
         // Volume control
         const volumeSlider = document.getElementById('volume-slider');
@@ -1163,6 +1348,77 @@
             }
         }
         
+        // Check if audio file can load and show troubleshooting message if needed
+        function checkAudioLoading() {
+            // Listen for error on Flowey's audio
+            audioElements.flowey.addEventListener('error', function() {
+                floweyAudioFailed = true;
+                document.getElementById('troubleshoot-message').classList.add('show');
+            });
+            
+            // Also test with a fetch request if on GitHub pages
+            if (window.location.hostname.includes('github.io')) {
+                fetch('flowey.mp3')
+                    .then(response => {
+                        if (!response.ok) {
+                            floweyAudioFailed = true;
+                            document.getElementById('troubleshoot-message').classList.add('show');
+                        }
+                    })
+                    .catch(() => {
+                        floweyAudioFailed = true;
+                        document.getElementById('troubleshoot-message').classList.add('show');
+                    });
+            }
+        }
+        
+        // Audio crossfade function
+        function crossfadeAudio(fadeOutAudio, fadeInAudio, duration = CROSSFADE_DURATION) {
+            // Clear any existing crossfade
+            if (crossfadeTimeoutId) {
+                clearInterval(crossfadeTimeoutId);
+            }
+            
+            // Start positions must match
+            fadeInAudio.currentTime = fadeOutAudio.currentTime;
+            
+            // Set both to current volume
+            const startVolume = currentVolume;
+            fadeOutAudio.volume = startVolume;
+            
+            // Start the new audio at 0 volume
+            fadeInAudio.volume = 0;
+            fadeInAudio.play().catch(e => console.log("Audio play failed:", e));
+            
+            // Number of steps for the crossfade
+            const steps = 20;
+            const stepTime = duration / steps;
+            const volumeStep = startVolume / steps;
+            
+            let currentStep = 0;
+            
+            // Create interval for the crossfade
+            crossfadeTimeoutId = setInterval(() => {
+                currentStep++;
+                
+                // Calculate new volumes
+                const outVol = Math.max(0, startVolume - (volumeStep * currentStep));
+                const inVol = Math.min(startVolume, volumeStep * currentStep);
+                
+                // Set new volumes
+                fadeOutAudio.volume = outVol;
+                fadeInAudio.volume = inVol;
+                
+                // Finish crossfade
+                if (currentStep >= steps) {
+                    fadeOutAudio.pause();
+                    fadeOutAudio.volume = startVolume; // Reset volume for next time
+                    clearInterval(crossfadeTimeoutId);
+                    crossfadeTimeoutId = null;
+                }
+            }, stepTime);
+        }
+        
         // Toggle music button
         const toggleMusicBtn = document.getElementById('toggle-music');
         const musicStatus = document.getElementById('music-status');
@@ -1200,6 +1456,11 @@
         
         // Music control functions
         function pauseAllMusic() {
+            if (crossfadeTimeoutId) {
+                clearInterval(crossfadeTimeoutId);
+                crossfadeTimeoutId = null;
+            }
+            
             for (const audio of Object.values(audioElements)) {
                 if (!audio.paused) {
                     audio.pause();
@@ -1246,9 +1507,18 @@
                     clearTimeout(animationTimeoutId);
                     break;
                 case 'flowey':
-                    audioElements.flowey.currentTime = currentAudioTime;
-                    audioElements.flowey.volume = currentVolume;
-                    audioElements.flowey.play().catch(e => console.log("Audio play failed:", e));
+                    // Check if audio failed before attempting to play
+                    if (!floweyAudioFailed) {
+                        audioElements.flowey.currentTime = currentAudioTime;
+                        audioElements.flowey.volume = currentVolume;
+                        audioElements.flowey.play().catch(e => {
+                            console.log("Flowey audio play failed:", e);
+                            floweyAudioFailed = true;
+                            document.getElementById('troubleshoot-message').classList.add('show');
+                        });
+                    } else {
+                        document.getElementById('troubleshoot-message').classList.add('show');
+                    }
                     clearTimeout(animationTimeoutId);
                     break;
             }
@@ -1264,16 +1534,13 @@
             }
         }
         
-        // Blackjack's music and theme cycle - 20 seconds
+        // Blackjack's music and theme cycle with crossfade - 20 seconds
         function startBlackjackMusicCycle() {
             clearTimeout(animationTimeoutId);
             
             // 20-second cycle for each state
             animationTimeoutId = setTimeout(() => {
                 if (currentCharacter === 'blackjack' && !isMusicMuted) {
-                    // Save current time position before switching
-                    saveCurrentAudioTime();
-                    
                     // Switch the state and apply theme
                     if (blackjackMusicState === 'humility') {
                         blackjackMusicState = 'bravery';
@@ -1285,11 +1552,19 @@
                             el.classList.add('bravery-state');
                         });
                         
-                        // Switch music tracks preserving position
-                        audioElements.blackjackBravery.currentTime = currentAudioTime;
-                        audioElements.blackjackBravery.volume = currentVolume;
-                        audioElements.blackjackHumility.pause();
-                        audioElements.blackjackBravery.play().catch(e => console.log("Audio play failed:", e));
+                        // Update profile picture to blackjack2.png
+                        if (cachedCharacters.blackjack) {
+                            cachedCharacters.blackjack.profilePicture = 'blackjack2.png';
+                            // Re-render the character to update the profile picture
+                            renderCharacter(cachedCharacters.blackjack);
+                        }
+                        
+                        // Crossfade the music tracks
+                        crossfadeAudio(
+                            audioElements.blackjackHumility, 
+                            audioElements.blackjackBravery, 
+                            CROSSFADE_DURATION
+                        );
                     } else {
                         blackjackMusicState = 'humility';
                         
@@ -1300,11 +1575,19 @@
                             el.classList.add('humility-state');
                         });
                         
-                        // Switch music tracks preserving position
-                        audioElements.blackjackHumility.currentTime = currentAudioTime;
-                        audioElements.blackjackHumility.volume = currentVolume;
-                        audioElements.blackjackBravery.pause();
-                        audioElements.blackjackHumility.play().catch(e => console.log("Audio play failed:", e));
+                        // Update profile picture to blackjack.png
+                        if (cachedCharacters.blackjack) {
+                            cachedCharacters.blackjack.profilePicture = 'blackjack.png';
+                            // Re-render the character to update the profile picture
+                            renderCharacter(cachedCharacters.blackjack);
+                        }
+                        
+                        // Crossfade the music tracks
+                        crossfadeAudio(
+                            audioElements.blackjackBravery, 
+                            audioElements.blackjackHumility, 
+                            CROSSFADE_DURATION
+                        );
                     }
                     
                     // Update the state display
@@ -1342,21 +1625,88 @@
             }
         }
         
-        // Toggle snow effect based on character
-        function toggleSnowEffect(character) {
-            const snowContainer = document.getElementById('snow-container');
+        // Falling petals effect for Flowey
+        function createPetals() {
+            const petalContainer = document.getElementById('petal-container');
+            petalContainer.innerHTML = ''; // Clear existing petals
             
+            // Different petal icon options
+            const petalIcons = [
+                '<i class="fas fa-leaf"></i>',
+                '<i class="fas fa-seedling"></i>',
+                '<i class="fas fa-spa"></i>',
+                '<i class="fas fa-fan"></i>'
+            ];
+            
+            // Create 30 petals with different sizes and speeds
+            for (let i = 0; i < 30; i++) {
+                const petal = document.createElement('div');
+                
+                // Randomize petal properties
+                const size = Math.random() < 0.3 ? 'small' : (Math.random() < 0.7 ? 'medium' : 'large');
+                const sway = Math.random() < 0.5; // 50% chance of swaying movement
+                const left = Math.random() * 100; // Random horizontal position (0-100%)
+                const animationDelay = Math.random() * 15; // Random delay (0-15s)
+                const iconIndex = Math.floor(Math.random() * petalIcons.length);
+                const isGolden = Math.random() < 0.2; // 20% chance of golden petal
+                
+                // Set petal classes and styles
+                petal.className = `petal ${size}${sway ? ' sway' : ''}${isGolden ? ' golden' : ''}`;
+                petal.style.left = `${left}%`;
+                petal.style.animationDelay = `${animationDelay}s`;
+                petal.innerHTML = petalIcons[iconIndex];
+                
+                // Add to container
+                petalContainer.appendChild(petal);
+                petals.push(petal);
+            }
+        }
+        
+        // Toggle character effects based on selected character
+        function toggleCharacterEffects(character) {
+            // Snow effect for Yuki
+            const snowContainer = document.getElementById('snow-container');
             if (character === 'yuki') {
                 // Create snowflakes if they don't exist yet
                 if (snowflakes.length === 0) {
                     createSnowflakes();
                 }
-                
-                // Show snow
                 snowContainer.classList.add('active');
             } else {
-                // Hide snow
                 snowContainer.classList.remove('active');
+            }
+            
+            // Petal effect for Flowey
+            const petalContainer = document.getElementById('petal-container');
+            if (character === 'flowey') {
+                // Create petals if they don't exist yet
+                if (petals.length === 0) {
+                    createPetals();
+                }
+                petalContainer.classList.add('active');
+                
+                // Show troubleshooting message if audio failed
+                if (floweyAudioFailed) {
+                    document.getElementById('troubleshoot-message').classList.add('show');
+                }
+            } else {
+                petalContainer.classList.remove('active');
+                document.getElementById('troubleshoot-message').classList.remove('show');
+            }
+            
+            // Add neon borders to Snaps' elements
+            if (character === 'snaps') {
+                const snapsElements = document.querySelectorAll('.character-snaps');
+                snapsElements.forEach(el => {
+                    // Remove any existing neon borders to prevent duplicates
+                    const existingBorders = el.querySelectorAll('.neon-border');
+                    existingBorders.forEach(border => border.remove());
+                    
+                    // Add new neon border
+                    const border = document.createElement('div');
+                    border.className = 'neon-border';
+                    el.appendChild(border);
+                });
             }
         }
         
@@ -1476,6 +1826,9 @@
                     }
                 }
                 
+                // Check audio file loading
+                checkAudioLoading();
+                
                 // Load saved volume setting
                 loadSavedVolume();
                 
@@ -1505,8 +1858,8 @@
                     startBlackjackMusicCycle();
                 }
                 
-                // Initialize snow for Yuki (if selected)
-                toggleSnowEffect(currentCharacter);
+                // Initialize character effects
+                toggleCharacterEffects(currentCharacter);
             } catch (error) {
                 console.error('Error initializing Firebase data:', error);
                 document.getElementById('connection-status').textContent = 'Connection error';
@@ -1557,8 +1910,8 @@
                 // No loading screen - display immediately from cache
                 renderCharacter(cachedCharacters[currentCharacter]);
                 
-                // Toggle snow effect based on character
-                toggleSnowEffect(currentCharacter);
+                // Toggle character effects based on selection
+                toggleCharacterEffects(currentCharacter);
                 
                 // Play the character's music preserving the time position
                 playCharacterMusic(currentCharacter);
@@ -1623,9 +1976,19 @@
             const blackjackStateClass = currentCharacter === 'blackjack' ? 
                 `${blackjackMusicState}-state` : '';
             
+            // Determine profile picture for Blackjack based on state
+            let profilePicture = character.profilePicture || 'default-avatar.png';
+            if (currentCharacter === 'blackjack') {
+                if (blackjackMusicState === 'bravery') {
+                    profilePicture = 'blackjack2.png';
+                } else {
+                    profilePicture = 'blackjack.png';
+                }
+            }
+            
             characterDisplay.innerHTML = `
                 <div class="character-profile ${characterClass} ${blackjackStateClass}">
-                    <img src="${character.profilePicture || 'default-avatar.png'}" alt="${character.name}" class="profile-image">
+                    <img src="${profilePicture}" alt="${character.name}" class="profile-image">
                     <h2 class="character-name">${character.name}</h2>
                     <div class="stat">
                         <span class="stat-name"><i class="fas fa-heart"></i> LOVE&nbsp</span>
