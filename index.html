@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Character Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --black: #121212;
@@ -11,6 +12,17 @@
             --gold: #d4af37;
             --dark-gold: #b8860b;
             --light-gold: #f5df9e;
+            --fire: #ff4500;
+            --water: #1e90ff;
+            --earth: #8b4513;
+            --air: #87ceeb;
+            --light: #fffacd;
+            --dark: #483d8b;
+        }
+        
+        * {
+            box-sizing: border-box;
+            transition: all 0.3s ease;
         }
         
         body {
@@ -20,19 +32,21 @@
             background-color: var(--black);
             color: var(--white);
             min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 1rem;
         }
         
         header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
             border-bottom: 2px solid var(--gold);
             padding-bottom: 1rem;
+            position: relative;
         }
         
         h1 {
@@ -40,13 +54,25 @@
             font-size: 2.5rem;
             color: var(--gold);
             letter-spacing: 1px;
+            margin: 0.5rem 0;
+            animation: glow 2s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px var(--gold), 0 0 10px var(--gold);
+            }
+            to {
+                text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold);
+            }
         }
         
         .characters {
             display: flex;
             justify-content: center;
-            gap: 2rem;
-            margin-bottom: 3rem;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
         
         .character-btn {
@@ -58,32 +84,141 @@
             cursor: pointer;
             transition: all 0.3s;
             outline: none;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .character-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            transition: all 0.5s;
+        }
+        
+        .character-btn:hover::before {
+            left: 100%;
         }
         
         .character-btn:hover {
             background-color: var(--gold);
             color: var(--black);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
         }
         
         .character-btn.active {
             background-color: var(--gold);
             color: var(--black);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+        
+        .status-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--light-gold);
+            margin-bottom: 1rem;
+        }
+        
+        .primary-stat {
+            color: var(--gold);
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold);
+            animation: primaryGlow 2s infinite alternate;
+            font-size: 1.1em;
+        }
+        
+        @keyframes primaryGlow {
+            from {
+                text-shadow: 0 0 10px var(--gold), 0 0 15px var(--gold);
+            }
+            to {
+                text-shadow: 0 0 15px var(--gold), 0 0 25px var(--gold), 0 0 35px var(--gold);
+            }
+        }
+        
+        .real-time-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
         }
         
         .character-display {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 2rem;
+            gap: 1.5rem;
+            animation: fadeIn 0.5s ease-in-out;
         }
         
-        .character-info, .character-stats, .character-inventory {
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .character-profile {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.5s ease-in-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            object-fit: cover;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .character-info, .character-stats, .character-inventory, .character-magic {
+            flex: 1;
+            min-width: 300px;
             background-color: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--gold);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            flex: 1;
-            min-width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateZ(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .character-info:hover, .character-stats:hover, .character-inventory:hover, .character-magic:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
         }
         
         h2 {
@@ -92,6 +227,12 @@
             font-weight: 400;
             border-bottom: 1px solid var(--light-gold);
             padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2 i {
+            margin-right: 10px;
         }
         
         .stat {
@@ -104,6 +245,13 @@
         
         .stat-name {
             font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-name i {
+            margin-right: 8px;
+            color: var(--light-gold);
         }
         
         .stat-value {
@@ -111,12 +259,134 @@
             font-weight: 300;
         }
         
+        .mana-container {
+            width: 100%;
+            height: 20px;
+            background-color: rgba(30, 144, 255, 0.2);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .mana-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #1e90ff, #00bfff);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 1s ease-in-out;
+            animation: shimmer 2s infinite;
+            background-size: 200% 100%;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+        
         .inventory-item {
             display: flex;
             justify-content: space-between;
             margin-bottom: 0.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .inventory-item:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .spell-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-left: 3px solid var(--gold);
+            transition: all 0.3s;
+        }
+        
+        .spell-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .spell-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+        
+        .spell-name {
+            font-weight: 500;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+        }
+        
+        .spell-cost {
+            color: #1e90ff;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .spell-cost i {
+            margin-right: 5px;
+        }
+        
+        .spell-element {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        .element-fire {
+            background-color: rgba(255, 69, 0, 0.2);
+            color: var(--fire);
+            border: 1px solid var(--fire);
+        }
+        
+        .element-water {
+            background-color: rgba(30, 144, 255, 0.2);
+            color: var(--water);
+            border: 1px solid var(--water);
+        }
+        
+        .element-earth {
+            background-color: rgba(139, 69, 19, 0.2);
+            color: var(--earth);
+            border: 1px solid var(--earth);
+        }
+        
+        .element-air {
+            background-color: rgba(135, 206, 235, 0.2);
+            color: var(--air);
+            border: 1px solid var(--air);
+        }
+        
+        .element-light {
+            background-color: rgba(255, 250, 205, 0.2);
+            color: var(--light);
+            border: 1px solid var(--light);
+        }
+        
+        .element-dark {
+            background-color: rgba(72, 61, 139, 0.2);
+            color: var(--dark);
+            border: 1px solid var(--dark);
+        }
+        
+        .spell-description {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            color: rgba(255, 255, 255, 0.7);
         }
         
         .loading {
@@ -133,57 +403,120 @@
             color: crimson;
             background-color: rgba(220, 20, 60, 0.1);
             border: 1px solid crimson;
+            border-radius: 5px;
         }
         
         .login-link {
             display: inline-block;
             margin-top: 2rem;
-            padding: 0.5rem 1rem;
+            padding: 0.8rem 1.5rem;
             background-color: transparent;
             border: 1px solid var(--gold);
             color: var(--gold);
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 1rem;
             transition: all 0.3s;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            transition: all 0.5s;
+        }
+        
+        .login-link:hover::before {
+            left: 100%;
         }
         
         .login-link:hover {
             background-color: var(--gold);
             color: var(--black);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
         }
         
         footer {
             text-align: center;
-            margin-top: 3rem;
+            margin-top: 2rem;
             padding-top: 1rem;
             border-top: 1px solid var(--gold);
             font-size: 0.9rem;
             color: var(--light-gold);
         }
         
-        .real-time-indicator {
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .characters {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 10px;
+                justify-content: flex-start;
+            }
+            
+            .character-btn {
+                flex: 0 0 auto;
+                padding: 0.6rem 1rem;
+                font-size: 1rem;
+            }
+            
+            .character-profile {
+                order: -1;
+            }
+            
+            .profile-image {
+                width: 120px;
+                height: 120px;
+            }
+        }
+        
+        /* Animation for stats changing */
+        .stat-value.changing {
+            animation: valueChange 0.5s ease-in-out;
+        }
+        
+        @keyframes valueChange {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #fff; }
+            100% { transform: scale(1); }
+        }
+        
+        /* Loading spinner animation */
+        .loading-spinner {
             display: inline-block;
-            width: 12px;
-            height: 12px;
-            background-color: #4CAF50;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
             border-radius: 50%;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
+            border-top-color: var(--gold);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
         }
         
-        .status-message {
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            font-size: 0.9rem;
-            color: var(--light-gold);
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            margin: 2rem 0;
         }
     </style>
 </head>
@@ -205,11 +538,14 @@
         </div>
         
         <div id="character-display" class="character-display">
-            <div class="loading">Loading character data...</div>
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading character data...</p>
+            </div>
         </div>
         
         <div style="text-align: center;">
-            <a href="admin.html" class="login-link">Admin Login</a>
+            <a href="admin.html" class="login-link"><i class="fas fa-lock"></i> Admin Login</a>
         </div>
         
         <footer>
@@ -224,32 +560,23 @@
 
     <script>
         // Firebase configuration
-const firebaseConfig = {
-
-  apiKey: "AIzaSyAeO0N50Qfu9VDMQ-6TKG54kPr_KRxQKJM",
-
-  authDomain: "ubts-characters.firebaseapp.com",
-
-  databaseURL: "https://ubts-characters-default-rtdb.firebaseio.com",
-
-  projectId: "ubts-characters",
-
-  storageBucket: "ubts-characters.firebasestorage.app",
-
-  messagingSenderId: "828565545666",
-
-  appId: "1:828565545666:web:79a6ca3ebb071eecddd15b",
-
-  measurementId: "G-4993DHLCF7"
-
-};
-
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeO0N50Qfu9VDMQ-6TKG54kPr_KRxQKJM",
+            authDomain: "ubts-characters.firebaseapp.com",
+            databaseURL: "https://ubts-characters-default-rtdb.firebaseio.com",
+            projectId: "ubts-characters",
+            storageBucket: "ubts-characters.firebasestorage.app",
+            messagingSenderId: "828565545666",
+            appId: "1:828565545666:web:79a6ca3ebb071eecddd15b",
+            measurementId: "G-4993DHLCF7"
+        };
+        
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         let currentCharacter = "blackjack";
         
-        // Initialize default character data if not exists
+        // Initialize default character data
         const defaultCharacters = {
             blackjack: {
                 name: "Blackjack",
@@ -260,7 +587,11 @@ const firebaseConfig = {
                 DEF: 12,
                 "PARRY CHANCE": 30,
                 G: 150,
-                inventory: ["Short Sword", "Health Potion", "Leather Armor"]
+                mana: 75,
+                maxMana: 100,
+                profilePicture: "blackjack.png",
+                inventory: ["Short Sword", "Health Potion", "Leather Armor"],
+                spells: []
             },
             yuki: {
                 name: "Yuki",
@@ -271,7 +602,11 @@ const firebaseConfig = {
                 DEF: 10,
                 "PARRY CHANCE": 35,
                 G: 200,
-                inventory: ["Magic Staff", "Mana Potion", "Wizard Hat"]
+                mana: 120,
+                maxMana: 150,
+                profilePicture: "yuki.png",
+                inventory: ["Magic Staff", "Mana Potion", "Wizard Hat"],
+                spells: []
             },
             snaps: {
                 name: "Snaps",
@@ -282,7 +617,11 @@ const firebaseConfig = {
                 DEF: 15,
                 "PARRY CHANCE": 25,
                 G: 175,
-                inventory: ["Battle Axe", "Shield", "Plate Armor"]
+                mana: 60,
+                maxMana: 80,
+                profilePicture: "snaps.png",
+                inventory: ["Battle Axe", "Shield", "Plate Armor"],
+                spells: []
             }
         };
 
@@ -348,65 +687,168 @@ const firebaseConfig = {
                 document.querySelector('.character-btn.active').classList.remove('active');
                 e.target.classList.add('active');
                 
+                // Show loading spinner
+                document.getElementById('character-display').innerHTML = `
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading character data...</p>
+                    </div>
+                `;
+                
                 // Update current character and set up new listener
                 currentCharacter = e.target.getAttribute('data-character');
                 setupRealtimeListener();
             });
         });
         
+        // Get element icon based on type
+        function getElementIcon(element) {
+            switch(element) {
+                case 'fire': return '<i class="fas fa-fire" style="color: var(--fire);"></i>';
+                case 'water': return '<i class="fas fa-tint" style="color: var(--water);"></i>';
+                case 'earth': return '<i class="fas fa-mountain" style="color: var(--earth);"></i>';
+                case 'air': return '<i class="fas fa-wind" style="color: var(--air);"></i>';
+                case 'light': return '<i class="fas fa-sun" style="color: var(--light);"></i>';
+                case 'dark': return '<i class="fas fa-moon" style="color: var(--dark);"></i>';
+                default: return '<i class="fas fa-magic"></i>';
+            }
+        }
+        
+        // Function to determine primary stat and add effect
+        function addPrimaryStatEffect(characterData) {
+            // Determine primary stat (highest among ATK, DEF, HP)
+            let primaryStat = 'HP';
+            let highestValue = characterData.HP;
+            
+            if (characterData.ATK > highestValue) {
+                primaryStat = 'ATK';
+                highestValue = characterData.ATK;
+            }
+            
+            if (characterData.DEF > highestValue) {
+                primaryStat = 'DEF';
+                highestValue = characterData.DEF;
+            }
+            
+            // Find all stat values
+            setTimeout(() => {
+                const statElements = document.querySelectorAll('.stat');
+                
+                statElements.forEach(statElement => {
+                    const nameElement = statElement.querySelector('.stat-name');
+                    if (nameElement && nameElement.textContent.includes(primaryStat)) {
+                        const valueElement = statElement.querySelector('.stat-value');
+                        if (valueElement) {
+                            valueElement.classList.add('primary-stat');
+                        }
+                    }
+                });
+            }, 100);
+        }
+        
         // Function to render character data
         function renderCharacter(character) {
             const characterDisplay = document.getElementById('character-display');
+            const manaPercentage = Math.round((character.mana / character.maxMana) * 100);
             
             characterDisplay.innerHTML = `
-                <div class="character-info">
+                <div class="character-profile">
+                    <img src="${character.profilePicture || 'default-avatar.png'}" alt="${character.name}" class="profile-image">
                     <h2>${character.name}</h2>
                     <div class="stat">
-                        <span class="stat-name">LOVE</span>
+                        <span class="stat-name"><i class="fas fa-heart"></i> LOVE</span>
                         <span class="stat-value">${character.LOVE}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-name">LV</span>
+                        <span class="stat-name"><i class="fas fa-chevron-up"></i> LV</span>
                         <span class="stat-value">${character.LV}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-name">G (Gold)</span>
+                        <span class="stat-name"><i class="fas fa-coins"></i> G (Gold)</span>
                         <span class="stat-value">${character.G}</span>
                     </div>
                 </div>
                 
                 <div class="character-stats">
-                    <h2>Stats</h2>
+                    <h2><i class="fas fa-chart-bar"></i> Stats</h2>
                     <div class="stat">
-                        <span class="stat-name">HP</span>
+                        <span class="stat-name"><i class="fas fa-heart"></i> HP</span>
                         <span class="stat-value">${character.HP}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-name">ATK</span>
+                        <span class="stat-name"><i class="fas fa-fist-raised"></i> ATK</span>
                         <span class="stat-value">${character.ATK}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-name">DEF</span>
+                        <span class="stat-name"><i class="fas fa-shield-alt"></i> DEF</span>
                         <span class="stat-value">${character.DEF}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-name">PARRY CHANCE</span>
+                        <span class="stat-name"><i class="fas fa-bolt"></i> PARRY CHANCE</span>
                         <span class="stat-value">${character["PARRY CHANCE"]}%</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-name"><i class="fas fa-flask"></i> Mana</span>
+                        <span class="stat-value">${character.mana}/${character.maxMana}</span>
+                    </div>
+                    <div class="mana-container">
+                        <div class="mana-bar" style="width: ${manaPercentage}%"></div>
                     </div>
                 </div>
                 
                 <div class="character-inventory">
-                    <h2>Inventory</h2>
+                    <h2><i class="fas fa-suitcase"></i> Inventory</h2>
                     ${character.inventory && character.inventory.length > 0 
                         ? character.inventory.map(item => `
                             <div class="inventory-item">
-                                <span>${item}</span>
+                                <span><i class="fas fa-box-open"></i> ${item}</span>
                             </div>
                         `).join('') 
                         : '<div class="inventory-item"><span>No items</span></div>'
                     }
                 </div>
+                
+                <div class="character-magic">
+                    <h2><i class="fas fa-hat-wizard"></i> Magic Spells</h2>
+                    ${character.spells && character.spells.length > 0 
+                        ? character.spells.map(spell => `
+                            <div class="spell-card">
+                                <div class="spell-header">
+                                    <div class="spell-name">${getElementIcon(spell.element)} ${spell.name}</div>
+                                    <div class="spell-cost"><i class="fas fa-flask"></i> ${spell.manaCost} Mana</div>
+                                </div>
+                                <div class="spell-element element-${spell.element}">${spell.element.charAt(0).toUpperCase() + spell.element.slice(1)}</div>
+                                <div class="spell-description">${spell.description}</div>
+                            </div>
+                        `).join('') 
+                        : '<div class="spell-card"><div class="spell-name">No spells learned yet</div></div>'
+                    }
+                </div>
             `;
+            
+            // Add special effect to primary stat
+            addPrimaryStatEffect(character);
+            
+            // Add animation to stats when they change
+            setTimeout(() => {
+                document.querySelectorAll('.stat-value').forEach(el => {
+                    if (!el.classList.contains('primary-stat')) {
+                        el.classList.add('changing');
+                        setTimeout(() => el.classList.remove('changing'), 500);
+                    }
+                });
+            }, 100);
+            
+            // Animate mana bar
+            setTimeout(() => {
+                const manaBar = document.querySelector('.mana-bar');
+                if (manaBar) {
+                    manaBar.style.width = '0%';
+                    setTimeout(() => {
+                        manaBar.style.width = manaPercentage + '%';
+                    }, 100);
+                }
+            }, 100);
         }
     </script>
 </body>

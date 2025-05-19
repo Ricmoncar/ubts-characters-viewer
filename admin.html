@@ -380,26 +380,16 @@
 
     <script>
         // Firebase configuration
-const firebaseConfig = {
-
-  apiKey: "AIzaSyAeO0N50Qfu9VDMQ-6TKG54kPr_KRxQKJM",
-
-  authDomain: "ubts-characters.firebaseapp.com",
-
-  databaseURL: "https://ubts-characters-default-rtdb.firebaseio.com",
-
-  projectId: "ubts-characters",
-
-  storageBucket: "ubts-characters.firebasestorage.app",
-
-  messagingSenderId: "828565545666",
-
-  appId: "1:828565545666:web:79a6ca3ebb071eecddd15b",
-
-  measurementId: "G-4993DHLCF7"
-
-};
-
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeO0N50Qfu9VDMQ-6TKG54kPr_KRxQKJM",
+            authDomain: "ubts-characters.firebaseapp.com",
+            databaseURL: "https://ubts-characters-default-rtdb.firebaseio.com",
+            projectId: "ubts-characters",
+            storageBucket: "ubts-characters.firebasestorage.app",
+            messagingSenderId: "828565545666",
+            appId: "1:828565545666:web:79a6ca3ebb071eecddd15b",
+            measurementId: "G-4993DHLCF7"
+        };
         
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
@@ -465,6 +455,8 @@ const firebaseConfig = {
                 // Initialize Firebase if needed and load initial character data
                 initializeFirebaseData().then(() => {
                     loadCharacterData();
+                    // Setup math calculations after loading data
+                    setupMathCalculations();
                 });
             } else {
                 document.getElementById('error-message').textContent = 'Incorrect password';
