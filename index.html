@@ -1195,7 +1195,7 @@
         <!-- Troubleshooting message for GitHub audio issue -->
         <div id="troubleshoot-message" class="troubleshoot-message">
             <i class="fas fa-exclamation-triangle"></i> 
-            flowey can go suck it
+           if you see this, tell flowey to fucking die (mp3 not working :D)
         </div>
         
         <!-- Snow container for Yuki -->
@@ -1204,15 +1204,12 @@
         <!-- Petal container for Flowey -->
         <div id="petal-container" class="petal-container"></div>
         
-        <!-- User interaction overlay -->
-        <div id="interaction-overlay" class="interaction-overlay">
-            <div class="interaction-message">
-                <h3>Audio Playback Requires Interaction</h3>
-                <p>Due to browser restrictions, audio playback requires user interaction.</p>
-                <p>Click the button below to enable audio for this app.</p>
-                <button id="enable-audio-button" class="interaction-button">Enable Audio</button>
-            </div>
-        </div>
+        <!-- Audio elements (hidden) -->
+        <audio id="blackjack-humility" src="humility.mp3" loop></audio>
+        <audio id="blackjack-bravery" src="bravery.mp3" loop></audio>
+        <audio id="yuki-audio" src="yuki.mp3" loop></audio>
+        <audio id="snaps-audio" src="snaps.mp3" loop></audio>
+        <audio id="flowey-audio" src="flowey.mp3" loop></audio>
         
         <div id="character-display" class="character-display">
             <div class="loading">
@@ -1533,9 +1530,6 @@
                         // Pause all currently playing music
                         pauseAllMusic();
                         
-                        // Flag to track if we're attempting to play audio before user interaction
-                        let needsUserInteraction = false;
-                        
                         // Play the appropriate music for the selected character
                         // And set the time position to continue from the previous track
                         switch(character) {
@@ -1545,20 +1539,14 @@
                                     audioElements.blackjackHumility.volume = currentVolume;
                                     const playPromise = audioElements.blackjackHumility.play();
                                     if (playPromise !== undefined) {
-                                        playPromise.catch(e => {
-                                            console.log("Audio play failed:", e);
-                                            needsUserInteraction = true;
-                                        });
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
                                     }
                                 } else if (audioElements.blackjackBravery) {
                                     audioElements.blackjackBravery.currentTime = currentAudioTime;
                                     audioElements.blackjackBravery.volume = currentVolume;
                                     const playPromise = audioElements.blackjackBravery.play();
                                     if (playPromise !== undefined) {
-                                        playPromise.catch(e => {
-                                            console.log("Audio play failed:", e);
-                                            needsUserInteraction = true;
-                                        });
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
                                     }
                                 }
                                 startBlackjackMusicCycle();
@@ -1569,10 +1557,7 @@
                                     audioElements.yuki.volume = currentVolume;
                                     const playPromise = audioElements.yuki.play();
                                     if (playPromise !== undefined) {
-                                        playPromise.catch(e => {
-                                            console.log("Audio play failed:", e);
-                                            needsUserInteraction = true;
-                                        });
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
                                     }
                                 }
                                 clearTimeout(animationTimeoutId);
@@ -1583,21 +1568,12 @@
                                     audioElements.snaps.volume = currentVolume;
                                     const playPromise = audioElements.snaps.play();
                                     if (playPromise !== undefined) {
-                                        playPromise.catch(e => {
-                                            console.log("Audio play failed:", e);
-                                            needsUserInteraction = true;
-                                        });
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
                                     }
                                 }
                                 clearTimeout(animationTimeoutId);
                                 break;
                             case 'flowey':
-                                // Special handling for Flowey's audio due to frequent autoplay issues
-                                const troubleshootMsg = document.getElementById('troubleshoot-message');
-                                if (troubleshootMsg) {
-                                    troubleshootMsg.classList.add('show');
-                                }
-                                
                                 // Check if audio failed before attempting to play
                                 if (!floweyAudioFailed && audioElements.flowey) {
                                     audioElements.flowey.currentTime = currentAudioTime;
@@ -1606,29 +1582,21 @@
                                     if (playPromise !== undefined) {
                                         playPromise.catch(e => {
                                             console.log("Flowey audio play failed:", e);
-                                            // If it's a user interaction error, show the message but don't mark as failed
-                                            if (e.name === "NotAllowedError") {
-                                                console.log("Audio needs user interaction");
-                                                needsUserInteraction = true;
-                                            } else {
-                                                floweyAudioFailed = true;
+                                            floweyAudioFailed = true;
+                                            const troubleshootMsg = document.getElementById('troubleshoot-message');
+                                            if (troubleshootMsg) {
+                                                troubleshootMsg.classList.add('show');
                                             }
                                         });
+                                    }
+                                } else {
+                                    const troubleshootMsg = document.getElementById('troubleshoot-message');
+                                    if (troubleshootMsg) {
+                                        troubleshootMsg.classList.add('show');
                                     }
                                 }
                                 clearTimeout(animationTimeoutId);
                                 break;
-                        }
-                        
-                        // If we need user interaction, add a one-time click handler to enable audio
-                        if (needsUserInteraction) {
-                            document.body.addEventListener('click', function enableAudio() {
-                                console.log("User interacted, trying to play audio again");
-                                // Try to play audio for current character
-                                playCharacterMusic(currentCharacter);
-                                // Remove click handler after first interaction
-                                document.body.removeEventListener('click', enableAudio);
-                            }, { once: true });
                         }
                     } catch (error) {
                         console.error("Error in playCharacterMusic:", error);
