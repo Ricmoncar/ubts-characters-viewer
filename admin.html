@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        :root {
+            --black: #121212;
+            --white: #f8f8f8;
+            --gold: #d4af37;
+            --dark-gold: #b8860b;
+            --light-gold: #f5df9e;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--black);
+            color: var(--white);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-weight: 300;
+            font-size: 2.5rem;
+            color: var(--gold);
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        
+        .back-button {
+            background-color: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .back-button:hover {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold);
+            padding: 2rem;
+        }
+        
+        .login-heading {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--gold);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light-gold);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--gold);
+            color: var(--white);
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--light-gold);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--gold);
+            border: none;
+            color: var(--black);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: var(--dark-gold);
+        }
+        
+        .error-message {
+            color: crimson;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .admin-panel {
+            display: none;
+        }
+        
+        .characters {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .character-btn {
+            background-color: transparent;
+            border: 2px solid var(--gold);
+            color: var(--white);
+            padding: 0.8rem 1.5rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .character-btn:hover {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+        
+        .character-btn.active {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+        
+        .character-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        
+        .form-section {
+            flex: 1;
+            min-width: 300px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold);
+            padding: 1.5rem;
+        }
+        
+        h2 {
+            margin-top: 0;
+            color: var(--gold);
+            font-weight: 400;
+            border-bottom: 1px solid var(--light-gold);
+            padding-bottom: 0.5rem;
+        }
+        
+        .save-container {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .save-btn {
+            background-color: var(--gold);
+            color: var(--black);
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .save-btn:hover {
+            background-color: var(--dark-gold);
+        }
+        
+        .inventory-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .inventory-controls input {
+            flex: 1;
+        }
+        
+        .inventory-controls button {
+            background-color: var(--gold);
+            color: var(--black);
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .remove-item {
+            background-color: transparent;
+            border: none;
+            color: crimson;
+            cursor: pointer;
+        }
+        
+        .success-message {
+            display: none;
+            color: #4CAF50;
+            text-align: center;
+            padding: 1rem;
+            background-color: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            margin-top: 1rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gold);
+            font-size: 0.9rem;
+            color: var(--light-gold);
+        }
+        
+        .real-time-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 0.8rem;
+            background-color: rgba(76, 175, 80, 0.1);
+            border: 1px solid #4CAF50;
+            border-radius: 4px;
+            margin-top: 1rem;
+            color: #4CAF50;
+            font-size: 0.9rem;
+        }
+        
+        .real-time-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Admin Panel</h1>
+            <a href="index.html" class="back-button">Back to Viewer</a>
+        </header>
+        
+        <div id="login-container" class="login-container">
+            <h2 class="login-heading">Admin Login</h2>
+            <div id="error-message" class="error-message"></div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
+        
+        <div id="admin-panel" class="admin-panel">
+            <div class="characters">
+                <button class="character-btn active" data-character="blackjack">Blackjack</button>
+                <button class="character-btn" data-character="yuki">Yuki</button>
+                <button class="character-btn" data-character="snaps">Snaps</button>
+            </div>
+            
+            <div class="real-time-badge">
+                <span class="real-time-indicator"></span>
+                <span>Changes will be reflected in real-time for all viewers</span>
+            </div>
+            
+            <form id="character-form" class="character-form">
+                <div class="form-section">
+                    <h2>Basic Info</h2>
+                    <div class="form-group">
+                        <label for="character-name">Name</label>
+                        <input type="text" id="character-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="character-love">LOVE</label>
+                        <input type="number" id="character-love" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="character-lv">LV</label>
+                        <input type="number" id="character-lv" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="character-g">G (Gold)</label>
+                        <input type="number" id="character-g" min="0" required>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h2>Stats</h2>
+                    <div class="form-group">
+                        <label for="character-hp">HP</label>
+                        <input type="number" id="character-hp" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="character-atk">ATK</label>
+                        <input type="number" id="character-atk" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="character-def">DEF</label>
+                        <input type="number" id="character-def" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="character-parry">PARRY CHANCE (%)</label>
+                        <input type="number" id="character-parry" min="0" max="100" required>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h2>Inventory</h2>
+                    <div id="inventory-items">
+                        <!-- Inventory items will be added here -->
+                    </div>
+                    
+                    <div class="inventory-controls">
+                        <input type="text" id="new-item" placeholder="New item name">
+                        <button type="button" id="add-item">Add</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="save-container">
+                <button type="button" id="save-btn" class="save-btn">Save Changes</button>
+                <div id="success-message" class="success-message">Changes saved successfully!</div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Character Database Admin Panel | <span id="current-year"></span></p>
+        </footer>
+    </div>
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+const firebaseConfig = {
+
+  apiKey: "AIzaSyAeO0N50Qfu9VDMQ-6TKG54kPr_KRxQKJM",
+
+  authDomain: "ubts-characters.firebaseapp.com",
+
+  databaseURL: "https://ubts-characters-default-rtdb.firebaseio.com",
+
+  projectId: "ubts-characters",
+
+  storageBucket: "ubts-characters.firebasestorage.app",
+
+  messagingSenderId: "828565545666",
+
+  appId: "1:828565545666:web:79a6ca3ebb071eecddd15b",
+
+  measurementId: "G-4993DHLCF7"
+
+};
+
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        const ADMIN_PASSWORD = "root"; // As specified in the requirements
+        let currentCharacter = "blackjack";
+        
+        // Initialize default character data if not exists
+        const defaultCharacters = {
+            blackjack: {
+                name: "Blackjack",
+                LOVE: 10,
+                LV: 5,
+                HP: 50,
+                ATK: 15,
+                DEF: 12,
+                "PARRY CHANCE": 30,
+                G: 150,
+                inventory: ["Short Sword", "Health Potion", "Leather Armor"]
+            },
+            yuki: {
+                name: "Yuki",
+                LOVE: 15,
+                LV: 7,
+                HP: 45,
+                ATK: 18,
+                DEF: 10,
+                "PARRY CHANCE": 35,
+                G: 200,
+                inventory: ["Magic Staff", "Mana Potion", "Wizard Hat"]
+            },
+            snaps: {
+                name: "Snaps",
+                LOVE: 12,
+                LV: 6,
+                HP: 60,
+                ATK: 12,
+                DEF: 15,
+                "PARRY CHANCE": 25,
+                G: 175,
+                inventory: ["Battle Axe", "Shield", "Plate Armor"]
+            }
+        };
+        
+        // Current character data
+        let characterData = {};
+        
+        // Set current year in footer
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Login form submission
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            
+            if (password === ADMIN_PASSWORD) {
+                // Hide login, show admin panel
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                
+                // Initialize Firebase if needed and load initial character data
+                initializeFirebaseData().then(() => {
+                    loadCharacterData();
+                });
+            } else {
+                document.getElementById('error-message').textContent = 'Incorrect password';
+                document.getElementById('password').value = '';
+            }
+        });
+        
+        // Initialize Firebase data if not exists
+        async function initializeFirebaseData() {
+            try {
+                // Check if data exists in Firebase
+                const snapshot = await database.ref('characters').once('value');
+                
+                if (!snapshot.exists()) {
+                    // If data doesn't exist, initialize with default values
+                    await database.ref('characters').set(defaultCharacters);
+                    console.log('Firebase initialized with default character data');
+                }
+            } catch (error) {
+                console.error('Error initializing Firebase data:', error);
+                document.getElementById('success-message').textContent = 'Error connecting to database';
+                document.getElementById('success-message').style.color = 'crimson';
+                document.getElementById('success-message').style.display = 'block';
+            }
+        }
+        
+        // Character button click handlers
+        document.querySelectorAll('.character-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // Update active button
+                document.querySelector('.character-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                
+                // Update current character and load data
+                currentCharacter = e.target.getAttribute('data-character');
+                loadCharacterData();
+            });
+        });
+        
+        // Load character data from Firebase
+        function loadCharacterData() {
+            database.ref(`characters/${currentCharacter}`).once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        characterData = data;
+                        updateFormFields();
+                    } else {
+                        console.error('Character data not found');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error loading character data:', error);
+                });
+        }
+        
+        // Update form fields with character data
+        function updateFormFields() {
+            document.getElementById('character-name').value = characterData.name;
+            document.getElementById('character-love').value = characterData.LOVE;
+            document.getElementById('character-lv').value = characterData.LV;
+            document.getElementById('character-g').value = characterData.G;
+            document.getElementById('character-hp').value = characterData.HP;
+            document.getElementById('character-atk').value = characterData.ATK;
+            document.getElementById('character-def').value = characterData.DEF;
+            document.getElementById('character-parry').value = characterData["PARRY CHANCE"];
+            
+            // Update inventory items
+            updateInventoryDisplay();
+        }
+        
+        // Update inventory display
+        function updateInventoryDisplay() {
+            const inventoryContainer = document.getElementById('inventory-items');
+            inventoryContainer.innerHTML = '';
+            
+            if (characterData.inventory && characterData.inventory.length > 0) {
+                characterData.inventory.forEach((item, index) => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'inventory-item';
+                    itemElement.innerHTML = `
+                        <span>${item}</span>
+                        <button type="button" class="remove-item" data-index="${index}">Remove</button>
+                    `;
+                    inventoryContainer.appendChild(itemElement);
+                });
+                
+                // Add event listeners to remove buttons
+                document.querySelectorAll('.remove-item').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const index = parseInt(e.target.getAttribute('data-index'));
+                        characterData.inventory.splice(index, 1);
+                        updateInventoryDisplay();
+                    });
+                });
+            } else {
+                inventoryContainer.innerHTML = '<div class="inventory-item"><span>No items</span></div>';
+            }
+        }
+        
+        // Add item button handler
+        document.getElementById('add-item').addEventListener('click', () => {
+            const newItem = document.getElementById('new-item').value.trim();
+            
+            if (newItem) {
+                if (!Array.isArray(characterData.inventory)) {
+                    characterData.inventory = [];
+                }
+                characterData.inventory.push(newItem);
+                document.getElementById('new-item').value = '';
+                updateInventoryDisplay();
+            }
+        });
+        
+        // Save changes button handler
+        document.getElementById('save-btn').addEventListener('click', () => {
+            // Update character data from form fields
+            characterData.name = document.getElementById('character-name').value;
+            characterData.LOVE = parseInt(document.getElementById('character-love').value);
+            characterData.LV = parseInt(document.getElementById('character-lv').value);
+            characterData.G = parseInt(document.getElementById('character-g').value);
+            characterData.HP = parseInt(document.getElementById('character-hp').value);
+            characterData.ATK = parseInt(document.getElementById('character-atk').value);
+            characterData.DEF = parseInt(document.getElementById('character-def').value);
+            characterData["PARRY CHANCE"] = parseInt(document.getElementById('character-parry').value);
+            
+            // Save to Firebase
+            database.ref(`characters/${currentCharacter}`).set(characterData)
+                .then(() => {
+                    // Show success message
+                    const successMessage = document.getElementById('success-message');
+                    successMessage.textContent = 'Changes saved successfully!';
+                    successMessage.style.color = '#4CAF50';
+                    successMessage.style.display = 'block';
+                    
+                    // Hide message after 3 seconds
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                    
+                    console.log(`Character ${currentCharacter} updated:`, characterData);
+                })
+                .catch((error) => {
+                    // Show error message
+                    const successMessage = document.getElementById('success-message');
+                    successMessage.textContent = `Error saving changes: ${error.message}`;
+                    successMessage.style.color = 'crimson';
+                    successMessage.style.display = 'block';
+                    
+                    console.error('Error saving character data:', error);
+                });
+        });
+    </script>
+</body>
+</html>

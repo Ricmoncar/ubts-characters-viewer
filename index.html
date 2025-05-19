@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Viewer</title>
+    <style>
+        :root {
+            --black: #121212;
+            --white: #f8f8f8;
+            --gold: #d4af37;
+            --dark-gold: #b8860b;
+            --light-gold: #f5df9e;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--black);
+            color: var(--white);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 1rem;
+        }
+        
+        h1 {
+            font-weight: 300;
+            font-size: 2.5rem;
+            color: var(--gold);
+            letter-spacing: 1px;
+        }
+        
+        .characters {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .character-btn {
+            background-color: transparent;
+            border: 2px solid var(--gold);
+            color: var(--white);
+            padding: 0.8rem 1.5rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .character-btn:hover {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+        
+        .character-btn.active {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+        
+        .character-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        
+        .character-info, .character-stats, .character-inventory {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        h2 {
+            margin-top: 0;
+            color: var(--gold);
+            font-weight: 400;
+            border-bottom: 1px solid var(--light-gold);
+            padding-bottom: 0.5rem;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+        }
+        
+        .stat-name {
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            color: var(--gold);
+            font-weight: 300;
+        }
+        
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--gold);
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: crimson;
+            background-color: rgba(220, 20, 60, 0.1);
+            border: 1px solid crimson;
+        }
+        
+        .login-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.5rem 1rem;
+            background-color: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .login-link:hover {
+            background-color: var(--gold);
+            color: var(--black);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gold);
+            font-size: 0.9rem;
+            color: var(--light-gold);
+        }
+        
+        .real-time-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--light-gold);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Character Viewer</h1>
+        </header>
+        
+        <div class="characters">
+            <button class="character-btn active" data-character="blackjack">Blackjack</button>
+            <button class="character-btn" data-character="yuki">Yuki</button>
+            <button class="character-btn" data-character="snaps">Snaps</button>
+        </div>
+        
+        <div class="status-message">
+            <span class="real-time-indicator"></span>
+            <span id="connection-status">Real-time connection active</span>
+        </div>
+        
+        <div id="character-display" class="character-display">
+            <div class="loading">Loading character data...</div>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="admin.html" class="login-link">Admin Login</a>
+        </div>
+        
+        <footer>
+            <p>Character Database Viewer | <span id="current-year"></span></p>
+        </footer>
+    </div>
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+const firebaseConfig = {
+
+  apiKey: "AIzaSyAeO0N50Qfu9VDMQ-6TKG54kPr_KRxQKJM",
+
+  authDomain: "ubts-characters.firebaseapp.com",
+
+  databaseURL: "https://ubts-characters-default-rtdb.firebaseio.com",
+
+  projectId: "ubts-characters",
+
+  storageBucket: "ubts-characters.firebasestorage.app",
+
+  messagingSenderId: "828565545666",
+
+  appId: "1:828565545666:web:79a6ca3ebb071eecddd15b",
+
+  measurementId: "G-4993DHLCF7"
+
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        let currentCharacter = "blackjack";
+        
+        // Initialize default character data if not exists
+        const defaultCharacters = {
+            blackjack: {
+                name: "Blackjack",
+                LOVE: 10,
+                LV: 5,
+                HP: 50,
+                ATK: 15,
+                DEF: 12,
+                "PARRY CHANCE": 30,
+                G: 150,
+                inventory: ["Short Sword", "Health Potion", "Leather Armor"]
+            },
+            yuki: {
+                name: "Yuki",
+                LOVE: 15,
+                LV: 7,
+                HP: 45,
+                ATK: 18,
+                DEF: 10,
+                "PARRY CHANCE": 35,
+                G: 200,
+                inventory: ["Magic Staff", "Mana Potion", "Wizard Hat"]
+            },
+            snaps: {
+                name: "Snaps",
+                LOVE: 12,
+                LV: 6,
+                HP: 60,
+                ATK: 12,
+                DEF: 15,
+                "PARRY CHANCE": 25,
+                G: 175,
+                inventory: ["Battle Axe", "Shield", "Plate Armor"]
+            }
+        };
+
+        // Set current year in footer
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Initialize character data in Firebase if not exists
+        async function initializeFirebaseData() {
+            try {
+                // Check if data exists in Firebase
+                const snapshot = await database.ref('characters').once('value');
+                
+                if (!snapshot.exists()) {
+                    // If data doesn't exist, initialize with default values
+                    await database.ref('characters').set(defaultCharacters);
+                    console.log('Firebase initialized with default character data');
+                }
+            } catch (error) {
+                console.error('Error initializing Firebase data:', error);
+                document.getElementById('connection-status').textContent = 'Connection error';
+                document.getElementById('connection-status').style.color = 'crimson';
+            }
+        }
+        
+        // Call initialize function
+        initializeFirebaseData();
+        
+        // Set up real-time listener for current character
+        function setupRealtimeListener() {
+            // Remove any existing listeners
+            database.ref(`characters/${currentCharacter}`).off();
+            
+            // Set up new listener
+            database.ref(`characters/${currentCharacter}`).on('value', (snapshot) => {
+                const characterData = snapshot.val();
+                if (characterData) {
+                    renderCharacter(characterData);
+                } else {
+                    document.getElementById('character-display').innerHTML = `
+                        <div class="error">
+                            Character data not found.
+                        </div>
+                    `;
+                }
+            }, (error) => {
+                document.getElementById('character-display').innerHTML = `
+                    <div class="error">
+                        Error loading character data: ${error.message}
+                    </div>
+                `;
+                document.getElementById('connection-status').textContent = 'Connection lost';
+                document.getElementById('connection-status').style.color = 'crimson';
+            });
+        }
+        
+        // Set up initial listener
+        setupRealtimeListener();
+        
+        // Add event listeners to character buttons
+        document.querySelectorAll('.character-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                // Update active button
+                document.querySelector('.character-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                
+                // Update current character and set up new listener
+                currentCharacter = e.target.getAttribute('data-character');
+                setupRealtimeListener();
+            });
+        });
+        
+        // Function to render character data
+        function renderCharacter(character) {
+            const characterDisplay = document.getElementById('character-display');
+            
+            characterDisplay.innerHTML = `
+                <div class="character-info">
+                    <h2>${character.name}</h2>
+                    <div class="stat">
+                        <span class="stat-name">LOVE</span>
+                        <span class="stat-value">${character.LOVE}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-name">LV</span>
+                        <span class="stat-value">${character.LV}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-name">G (Gold)</span>
+                        <span class="stat-value">${character.G}</span>
+                    </div>
+                </div>
+                
+                <div class="character-stats">
+                    <h2>Stats</h2>
+                    <div class="stat">
+                        <span class="stat-name">HP</span>
+                        <span class="stat-value">${character.HP}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-name">ATK</span>
+                        <span class="stat-value">${character.ATK}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-name">DEF</span>
+                        <span class="stat-value">${character.DEF}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-name">PARRY CHANCE</span>
+                        <span class="stat-value">${character["PARRY CHANCE"]}%</span>
+                    </div>
+                </div>
+                
+                <div class="character-inventory">
+                    <h2>Inventory</h2>
+                    ${character.inventory && character.inventory.length > 0 
+                        ? character.inventory.map(item => `
+                            <div class="inventory-item">
+                                <span>${item}</span>
+                            </div>
+                        `).join('') 
+                        : '<div class="inventory-item"><span>No items</span></div>'
+                    }
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
