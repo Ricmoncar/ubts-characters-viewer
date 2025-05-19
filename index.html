@@ -64,6 +64,9 @@
         const database = firebase.database();
         let currentCharacter = "blackjack";
         
+        // Object to store all character data 
+        const cachedCharacters = {};
+        
         // Initialize default character data
         const defaultCharacters = {
             blackjack: {
@@ -150,7 +153,7 @@
         // Set current year in footer
         document.getElementById('current-year').textContent = new Date().getFullYear();
         
-        // Initialize character data in Firebase if not exists
+        // Initialize character data in Firebase if not exists and load all data
         async function initializeFirebaseData() {
             try {
                 // Check if data exists in Firebase
@@ -160,54 +163,64 @@
                     // If data doesn't exist, initialize with default values
                     await database.ref('characters').set(defaultCharacters);
                     console.log('Firebase initialized with default character data');
+                    
+                    // Cache the default characters
+                    Object.keys(defaultCharacters).forEach(charName => {
+                        cachedCharacters[charName] = defaultCharacters[charName];
+                    });
                 } else {
+                    // Data exists, cache it
+                    const charactersData = snapshot.val();
+                    Object.keys(charactersData).forEach(charName => {
+                        cachedCharacters[charName] = charactersData[charName];
+                    });
+                    
                     // Check if Flowey exists, add if not
-                    const floweySnapshot = await database.ref('characters/flowey').once('value');
-                    if (!floweySnapshot.exists()) {
+                    if (!charactersData.flowey) {
                         await database.ref('characters/flowey').set(defaultCharacters.flowey);
+                        cachedCharacters.flowey = defaultCharacters.flowey;
                         console.log('Flowey character added to Firebase');
                     }
                 }
+                
+                // Display the initial character
+                renderCharacter(cachedCharacters[currentCharacter]);
+                
+                // Set up real-time listeners for all characters
+                setupRealtimeListeners();
             } catch (error) {
                 console.error('Error initializing Firebase data:', error);
                 document.getElementById('connection-status').textContent = 'Connection error';
                 document.getElementById('connection-status').style.color = 'crimson';
+                
+                // Use default data if there's an error
+                Object.keys(defaultCharacters).forEach(charName => {
+                    cachedCharacters[charName] = defaultCharacters[charName];
+                });
+                renderCharacter(cachedCharacters[currentCharacter]);
             }
         }
         
-        // Call initialize function
-        initializeFirebaseData();
-        
-        // Set up real-time listener for current character
-        function setupRealtimeListener() {
-            // Remove any existing listeners
-            database.ref(`characters/${currentCharacter}`).off();
-            
-            // Set up new listener
-            database.ref(`characters/${currentCharacter}`).on('value', (snapshot) => {
-                const characterData = snapshot.val();
-                if (characterData) {
-                    renderCharacter(characterData);
-                } else {
-                    document.getElementById('character-display').innerHTML = `
-                        <div class="error">
-                            Character data not found.
-                        </div>
-                    `;
-                }
-            }, (error) => {
-                document.getElementById('character-display').innerHTML = `
-                    <div class="error">
-                        Error loading character data: ${error.message}
-                    </div>
-                `;
-                document.getElementById('connection-status').textContent = 'Connection lost';
-                document.getElementById('connection-status').style.color = 'crimson';
+        // Set up real-time listeners for all characters
+        function setupRealtimeListeners() {
+            // Set up listeners for each character
+            Object.keys(defaultCharacters).forEach(charName => {
+                database.ref(`characters/${charName}`).on('value', (snapshot) => {
+                    const characterData = snapshot.val();
+                    if (characterData) {
+                        // Update the cached data
+                        cachedCharacters[charName] = characterData;
+                        
+                        // If this is the current character, update the display
+                        if (charName === currentCharacter) {
+                            renderCharacter(characterData);
+                        }
+                    }
+                }, (error) => {
+                    console.error(`Error listening to ${charName} data:`, error);
+                });
             });
         }
-        
-        // Set up initial listener
-        setupRealtimeListener();
         
         // Add event listeners to character buttons
         document.querySelectorAll('.character-btn').forEach(button => {
@@ -216,21 +229,11 @@
                 document.querySelector('.character-btn.active').classList.remove('active');
                 e.target.classList.add('active');
                 
-                // Show loading spinner
-                document.getElementById('character-display').innerHTML = `
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        <p>Loading character data...</p>
-                    </div>
-                `;
-                
-                // Update current character and set up new listener
+                // Update current character
                 currentCharacter = e.target.getAttribute('data-character');
                 
-                // Small delay to prevent animation glitches
-                setTimeout(() => {
-                    setupRealtimeListener();
-                }, 50);
+                // No loading screen - display immediately from cache
+                renderCharacter(cachedCharacters[currentCharacter]);
             });
         });
         
@@ -277,7 +280,7 @@
                         }
                     }
                 });
-            }, 100);
+            }, 10);
         }
         
         // Function to render character data
@@ -374,7 +377,7 @@
                         setTimeout(() => el.classList.remove('changing'), 1000);
                     }
                 });
-            }, 100);
+            }, 10);
             
             // Animate mana bar
             setTimeout(() => {
@@ -383,10 +386,13 @@
                     manaBar.style.width = '0%';
                     setTimeout(() => {
                         manaBar.style.width = manaPercentage + '%';
-                    }, 100);
+                    }, 10);
                 }
-            }, 100);
+            }, 10);
         }
+        
+        // Initialize the application
+        initializeFirebaseData();
     </script>
 </body>
 </html>
