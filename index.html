@@ -28,7 +28,7 @@
             --yuki-secondary: #f0f8ff; /* Ice blue */
             
             --flowey-primary: #8b0000; /* Dark red */
-            --flowey-secondary: #ffcece; /* Green for plants/vines */
+            --flowey-secondary: #2e8b57; /* Green for plants/vines */
             
             --snaps-primary: #32cd32; /* Bright green */
             --snaps-secondary: #006400; /* Dark green */
@@ -189,6 +189,7 @@
             gap: 15px;
             opacity: 0.8;
             transition: opacity 0.3s ease;
+            flex-wrap: wrap;
         }
 
         .music-controls:hover {
@@ -226,6 +227,74 @@
             color: var(--light-gold);
             font-size: 0.9rem;
             transition: all 0.3s ease;
+        }
+
+        /* Volume Slider Styling */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+            background-color: rgba(212, 175, 55, 0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .volume-control:hover {
+            background-color: rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+
+        .volume-control i {
+            color: var(--gold);
+            margin-right: 8px;
+        }
+
+        .volume-slider {
+            -webkit-appearance: none;
+            width: 100px;
+            height: 6px;
+            border-radius: 5px;
+            background: linear-gradient(to right, var(--gold) 0%, var(--gold) 100%);
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--gold);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--gold);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb:hover,
+        .volume-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .volume-level {
+            font-size: 0.8rem;
+            color: var(--light-gold);
+            margin-left: 8px;
+            min-width: 28px;
         }
 
         .character-display {
@@ -906,6 +975,18 @@
                 width: 120px;
                 height: 120px;
             }
+            
+            .music-controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .volume-control {
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -928,12 +1009,19 @@
             <span class="music-state-indicator humility">Humility</span>
         </div>
         
-        <!-- Music player -->
+        <!-- Music player with volume control -->
         <div class="music-controls">
             <button id="toggle-music" class="music-toggle">
                 <i class="fas fa-volume-up"></i>
             </button>
             <span id="music-status">Music: On</span>
+            
+            <!-- Volume slider -->
+            <div class="volume-control">
+                <i class="fas fa-volume-down"></i>
+                <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="100">
+                <span id="volume-level" class="volume-level">100%</span>
+            </div>
         </div>
         
         <!-- Snow container for Yuki -->
@@ -1006,6 +1094,75 @@
         let animationTimeoutId;
         let snowflakes = []; // To store snowflake elements
         
+        // Volume control
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeLevel = document.getElementById('volume-level');
+        let currentVolume = 1.0; // Default volume (1.0 = 100%)
+        
+        // Initialize volume slider
+        volumeSlider.addEventListener('input', function() {
+            // Update volume display
+            const volumePercent = this.value;
+            volumeLevel.textContent = `${volumePercent}%`;
+            
+            // Calculate volume value (0.0 to 1.0)
+            currentVolume = volumePercent / 100;
+            
+            // Update icon based on volume level
+            const volumeIcon = document.querySelector('.volume-control i');
+            if (currentVolume === 0) {
+                volumeIcon.className = 'fas fa-volume-off';
+            } else if (currentVolume < 0.5) {
+                volumeIcon.className = 'fas fa-volume-down';
+            } else {
+                volumeIcon.className = 'fas fa-volume-up';
+            }
+            
+            // Update all audio elements volume
+            setAllAudioVolume(currentVolume);
+            
+            // Update background gradient on the slider to show volume level
+            const percentage = (volumePercent - volumeSlider.min) / (volumeSlider.max - volumeSlider.min) * 100;
+            volumeSlider.style.background = `linear-gradient(to right, var(--gold) 0%, var(--gold) ${percentage}%, rgba(255, 255, 255, 0.2) ${percentage}%, rgba(255, 255, 255, 0.2) 100%)`;
+            
+            // Save volume setting to localStorage
+            localStorage.setItem('characterViewerVolume', currentVolume);
+        });
+        
+        // Set volume for all audio elements
+        function setAllAudioVolume(volume) {
+            for (const audio of Object.values(audioElements)) {
+                audio.volume = volume;
+            }
+        }
+        
+        // Load saved volume setting if available
+        function loadSavedVolume() {
+            const savedVolume = localStorage.getItem('characterViewerVolume');
+            if (savedVolume !== null) {
+                currentVolume = parseFloat(savedVolume);
+                volumeSlider.value = Math.round(currentVolume * 100);
+                volumeLevel.textContent = `${Math.round(currentVolume * 100)}%`;
+                
+                // Update slider background
+                const percentage = (volumeSlider.value - volumeSlider.min) / (volumeSlider.max - volumeSlider.min) * 100;
+                volumeSlider.style.background = `linear-gradient(to right, var(--gold) 0%, var(--gold) ${percentage}%, rgba(255, 255, 255, 0.2) ${percentage}%, rgba(255, 255, 255, 0.2) 100%)`;
+                
+                // Update all audio volumes
+                setAllAudioVolume(currentVolume);
+                
+                // Update icon
+                const volumeIcon = document.querySelector('.volume-control i');
+                if (currentVolume === 0) {
+                    volumeIcon.className = 'fas fa-volume-off';
+                } else if (currentVolume < 0.5) {
+                    volumeIcon.className = 'fas fa-volume-down';
+                } else {
+                    volumeIcon.className = 'fas fa-volume-up';
+                }
+            }
+        }
+        
         // Toggle music button
         const toggleMusicBtn = document.getElementById('toggle-music');
         const musicStatus = document.getElementById('music-status');
@@ -1067,25 +1224,30 @@
                 case 'blackjack':
                     if (blackjackMusicState === 'humility') {
                         audioElements.blackjackHumility.currentTime = currentAudioTime;
+                        audioElements.blackjackHumility.volume = currentVolume;
                         audioElements.blackjackHumility.play().catch(e => console.log("Audio play failed:", e));
                     } else {
                         audioElements.blackjackBravery.currentTime = currentAudioTime;
+                        audioElements.blackjackBravery.volume = currentVolume;
                         audioElements.blackjackBravery.play().catch(e => console.log("Audio play failed:", e));
                     }
                     startBlackjackMusicCycle();
                     break;
                 case 'yuki':
                     audioElements.yuki.currentTime = currentAudioTime;
+                    audioElements.yuki.volume = currentVolume;
                     audioElements.yuki.play().catch(e => console.log("Audio play failed:", e));
                     clearTimeout(animationTimeoutId);
                     break;
                 case 'snaps':
                     audioElements.snaps.currentTime = currentAudioTime;
+                    audioElements.snaps.volume = currentVolume;
                     audioElements.snaps.play().catch(e => console.log("Audio play failed:", e));
                     clearTimeout(animationTimeoutId);
                     break;
                 case 'flowey':
                     audioElements.flowey.currentTime = currentAudioTime;
+                    audioElements.flowey.volume = currentVolume;
                     audioElements.flowey.play().catch(e => console.log("Audio play failed:", e));
                     clearTimeout(animationTimeoutId);
                     break;
@@ -1125,6 +1287,7 @@
                         
                         // Switch music tracks preserving position
                         audioElements.blackjackBravery.currentTime = currentAudioTime;
+                        audioElements.blackjackBravery.volume = currentVolume;
                         audioElements.blackjackHumility.pause();
                         audioElements.blackjackBravery.play().catch(e => console.log("Audio play failed:", e));
                     } else {
@@ -1139,6 +1302,7 @@
                         
                         // Switch music tracks preserving position
                         audioElements.blackjackHumility.currentTime = currentAudioTime;
+                        audioElements.blackjackHumility.volume = currentVolume;
                         audioElements.blackjackBravery.pause();
                         audioElements.blackjackHumility.play().catch(e => console.log("Audio play failed:", e));
                     }
@@ -1149,7 +1313,7 @@
                 
                 // Continue the cycle
                 startBlackjackMusicCycle();
-            }, 10000); // 20 seconds per state
+            }, 20000); // 20 seconds per state
         }
         
         // Snow effect for Yuki
@@ -1311,6 +1475,9 @@
                         console.log('Flowey character added to Firebase');
                     }
                 }
+                
+                // Load saved volume setting
+                loadSavedVolume();
                 
                 // Display the initial character
                 renderCharacter(cachedCharacters[currentCharacter]);
