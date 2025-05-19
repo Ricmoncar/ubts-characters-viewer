@@ -5,7 +5,909 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Character Viewer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --black: #121212;
+            --white: #f8f8f8;
+            --gold: #d4af37;
+            --dark-gold: #b8860b;
+            --light-gold: #f5df9e;
+            --fire: #ff4500;
+            --water: #1e90ff;
+            --earth: #8b4513;
+            --air: #87ceeb;
+            --light: #fffacd;
+            --dark: #483d8b;
+            --plant: #2e8b57;
+            
+            /* Character-specific color schemes */
+            --blackjack-primary: #1e90ff; /* Blue for HUMILITY */
+            --blackjack-secondary: #ff8c00; /* Orange for BRAVERY */
+            
+            --yuki-primary: #add8e6; /* Light blue */
+            --yuki-secondary: #f0f8ff; /* Ice blue */
+            
+            --flowey-primary: #8b0000; /* Dark red */
+            --flowey-secondary: #ffcece; /* Green for plants/vines */
+            
+            --snaps-primary: #32cd32; /* Bright green */
+            --snaps-secondary: #006400; /* Dark green */
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--black);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            position: relative; /* For snow overlay positioning */
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 1rem;
+            position: relative;
+            animation: fadeInDown 1.5s ease;
+        }
+
+        h1 {
+            font-weight: 300;
+            font-size: 2.5rem;
+            color: var(--gold);
+            letter-spacing: 1px;
+            margin: 0.5rem 0;
+            animation: glow 3s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px var(--gold), 0 0 10px var(--gold);
+            }
+            to {
+                text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold), 0 0 30px var(--gold);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from { 
+                opacity: 0; 
+                transform: translateY(-30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        .characters {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            animation: fadeIn 1.5s ease;
+        }
+
+        .character-btn {
+            background-color: transparent;
+            border: 2px solid var(--gold);
+            color: var(--white);
+            padding: 0.8rem 1.5rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.6s;
+            outline: none;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .character-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+            transition: all 0.8s;
+        }
+
+        .character-btn:hover::before {
+            left: 100%;
+        }
+
+        .character-btn:hover {
+            background-color: var(--gold);
+            color: var(--black);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .character-btn.active {
+            background-color: var(--gold);
+            color: var(--black);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .status-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--light-gold);
+            margin-bottom: 1rem;
+        }
+
+        .real-time-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .music-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            gap: 15px;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .music-controls:hover {
+            opacity: 1;
+        }
+
+        .music-toggle {
+            background-color: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 8px rgba(212, 175, 55, 0.2);
+        }
+
+        .music-toggle:hover {
+            background-color: var(--gold);
+            color: var(--black);
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .music-toggle.muted {
+            opacity: 0.5;
+            box-shadow: none;
+        }
+
+        #music-status {
+            color: var(--light-gold);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .character-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            position: relative; /* For snow positioning */
+        }
+
+        /* Character profiles and sections */
+        .character-profile {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.7s ease, box-shadow 0.7s ease;
+        }
+
+        .character-profile:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            object-fit: cover;
+            margin-bottom: 1rem;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .character-info, .character-stats, .character-inventory, .character-magic {
+            flex: 1;
+            min-width: 300px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--gold);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateZ(0);
+            transition: transform 0.7s ease, box-shadow 0.7s ease;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--gold);
+            font-weight: 400;
+            border-bottom: 1px solid var(--light-gold);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        h2 i {
+            margin-right: 10px;
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.5rem;
+            transition: all 0.5s ease;
+        }
+
+        .stat:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding-left: 0.5rem;
+            border-radius: 5px;
+        }
+
+        .stat-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-name i {
+            margin-right: 8px;
+            color: var(--light-gold);
+            transition: transform 0.5s ease;
+        }
+
+        .stat:hover .stat-name i {
+            transform: scale(1.2) rotate(15deg);
+        }
+
+        .stat-value {
+            color: var(--gold);
+            font-weight: 300;
+            transition: all 0.5s ease;
+        }
+
+        .stat:hover .stat-value {
+            letter-spacing: 1px;
+        }
+
+        .mana-container {
+            width: 100%;
+            height: 20px;
+            background-color: rgba(30, 144, 255, 0.2);
+            border-radius: 10px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mana-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #1e90ff, #00bfff);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 1.5s ease-in-out;
+            animation: shimmer 4s infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        .inventory-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: all 0.7s;
+        }
+
+        .inventory-item:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            transform: translateX(10px) scale(1.03);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .spell-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-left: 3px solid var(--gold);
+            transition: all 0.7s;
+            animation: fadeInRight 1.5s ease;
+        }
+
+        @keyframes fadeInRight {
+            from { 
+                opacity: 0; 
+                transform: translateX(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+        }
+
+        .spell-card:hover {
+            transform: translateX(10px) scale(1.03);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            border-left-width: 5px;
+        }
+
+        .spell-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .spell-name {
+            font-weight: 500;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+        }
+
+        .spell-cost {
+            color: #1e90ff;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .spell-element {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            transition: all 0.6s ease;
+        }
+
+        .element-fire {
+            background-color: rgba(255, 69, 0, 0.2);
+            color: var(--fire);
+            border: 1px solid var(--fire);
+        }
+
+        .element-water {
+            background-color: rgba(30, 144, 255, 0.2);
+            color: var(--water);
+            border: 1px solid var(--water);
+        }
+
+        .element-earth {
+            background-color: rgba(139, 69, 19, 0.2);
+            color: var(--earth);
+            border: 1px solid var(--earth);
+        }
+
+        .element-air {
+            background-color: rgba(135, 206, 235, 0.2);
+            color: var(--air);
+            border: 1px solid var(--air);
+        }
+
+        .element-light {
+            background-color: rgba(255, 250, 205, 0.2);
+            color: var(--light);
+            border: 1px solid var(--light);
+        }
+
+        .element-dark {
+            background-color: rgba(72, 61, 139, 0.2);
+            color: var(--dark);
+            border: 1px solid var(--dark);
+        }
+
+        .element-plant {
+            background-color: rgba(46, 139, 87, 0.2);
+            color: var(--plant);
+            border: 1px solid var(--plant);
+        }
+
+        .spell-description {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+            transition: all 0.5s ease;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--gold);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--gold);
+            animation: spin 1.5s ease-in-out infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--black);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .loading p {
+            margin-top: 20px;
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+
+        .login-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.8rem 1.5rem;
+            background-color: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.7s;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            animation: bounce 5s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .login-link:hover {
+            background-color: var(--gold);
+            color: var(--black);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gold);
+            font-size: 0.9rem;
+            color: var(--light-gold);
+            animation: fadeIn 2s ease;
+        }
+
+        /* Character-specific styles */
+        /* Blackjack (with state cycling) */
+        .character-blackjack {
+            transition: all 5s ease !important;
+        }
+
+        .character-blackjack .profile-image,
+        .character-blackjack h2.character-name,
+        .character-blackjack .character-stats,
+        .character-blackjack .character-inventory,
+        .character-blackjack .character-magic,
+        .character-blackjack .mana-bar {
+            transition: all 5s ease !important;
+        }
+
+        /* Humility state (Blue theme) */
+        .character-blackjack.humility-state {
+            border-color: var(--blackjack-primary);
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.2), rgba(30, 144, 255, 0.05));
+        }
+
+        .character-blackjack.humility-state .profile-image {
+            border-color: var(--blackjack-primary);
+            box-shadow: 0 5px 15px rgba(30, 144, 255, 0.4);
+        }
+
+        .character-blackjack.humility-state h2.character-name {
+            color: var(--blackjack-primary);
+            border-bottom-color: var(--blackjack-primary);
+        }
+
+        .character-blackjack.humility-state .character-stats,
+        .character-blackjack.humility-state .character-inventory,
+        .character-blackjack.humility-state .character-magic {
+            border-color: var(--blackjack-primary);
+        }
+
+        .character-blackjack.humility-state .mana-bar {
+            background: linear-gradient(90deg, var(--blackjack-primary), var(--blackjack-primary));
+        }
+
+        /* Bravery state (Orange theme) */
+        .character-blackjack.bravery-state {
+            border-color: var(--blackjack-secondary);
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.2), rgba(255, 140, 0, 0.05));
+        }
+
+        .character-blackjack.bravery-state .profile-image {
+            border-color: var(--blackjack-secondary);
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+        }
+
+        .character-blackjack.bravery-state h2.character-name {
+            color: var(--blackjack-secondary);
+            border-bottom-color: var(--blackjack-secondary);
+        }
+
+        .character-blackjack.bravery-state .character-stats,
+        .character-blackjack.bravery-state .character-inventory,
+        .character-blackjack.bravery-state .character-magic {
+            border-color: var(--blackjack-secondary);
+        }
+
+        .character-blackjack.bravery-state .mana-bar {
+            background: linear-gradient(90deg, var(--blackjack-secondary), var(--blackjack-secondary));
+        }
+
+        /* Yuki (Light Blue) */
+        .character-yuki {
+            border-color: var(--yuki-primary);
+            background: linear-gradient(135deg, rgba(173, 216, 230, 0.1), rgba(240, 248, 255, 0.1));
+        }
+
+        .character-yuki .profile-image {
+            border-color: var(--yuki-primary);
+            box-shadow: 0 5px 15px rgba(173, 216, 230, 0.4);
+        }
+
+        .character-yuki h2.character-name {
+            color: var(--yuki-primary);
+            border-bottom-color: var(--yuki-secondary);
+        }
+
+        .character-yuki .character-stats,
+        .character-yuki .character-inventory,
+        .character-yuki .character-magic {
+            border-color: var(--yuki-primary);
+        }
+
+        .character-yuki .mana-bar {
+            background: linear-gradient(90deg, var(--yuki-primary), var(--yuki-secondary));
+        }
+
+        /* Flowey (Red/Green) */
+        .character-flowey {
+            border-color: var(--flowey-primary);
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.1), rgba(46, 139, 87, 0.1));
+        }
+
+        .character-flowey .profile-image {
+            border-color: var(--flowey-primary);
+            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.4);
+        }
+
+        .character-flowey h2.character-name {
+            color: var(--flowey-primary);
+            border-bottom-color: var(--flowey-secondary);
+        }
+
+        .character-flowey .character-stats,
+        .character-flowey .character-inventory,
+        .character-flowey .character-magic {
+            border-color: var(--flowey-primary);
+        }
+
+        .character-flowey .mana-bar {
+            background: linear-gradient(90deg, var(--flowey-primary), var(--flowey-secondary));
+        }
+
+        /* Snaps (Green) */
+        .character-snaps {
+            border-color: var(--snaps-primary);
+            background: linear-gradient(135deg, rgba(50, 205, 50, 0.1), rgba(0, 100, 0, 0.1));
+        }
+
+        .character-snaps .profile-image {
+            border-color: var(--snaps-primary);
+            box-shadow: 0 5px 15px rgba(50, 205, 50, 0.4);
+        }
+
+        .character-snaps h2.character-name {
+            color: var(--snaps-primary);
+            border-bottom-color: var(--snaps-secondary);
+        }
+
+        .character-snaps .character-stats,
+        .character-snaps .character-inventory,
+        .character-snaps .character-magic {
+            border-color: var(--snaps-primary);
+        }
+
+        .character-snaps .mana-bar {
+            background: linear-gradient(90deg, var(--snaps-primary), var(--snaps-secondary));
+        }
+
+        /* Animation for state indicator */
+        .music-state-indicator {
+            display: inline-block;
+            font-size: 0.85rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            margin-left: 10px;
+            transition: all 5s ease;
+        }
+
+        .music-state-indicator.humility {
+            background-color: rgba(30, 144, 255, 0.2);
+            color: #1e90ff;
+            border: 1px solid #1e90ff;
+        }
+
+        .music-state-indicator.bravery {
+            background-color: rgba(255, 140, 0, 0.2);
+            color: #ff8c00;
+            border: 1px solid #ff8c00;
+        }
+
+        /* YUKI'S SNOW EFFECT */
+        /* Snow container */
+        .snow-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .snow-container.active {
+            opacity: 1;
+        }
+
+        /* Snowflake styles with different sizes and speeds */
+        .snowflake {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation-name: snowfall;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        /* Small snowflakes */
+        .snowflake.small {
+            width: 4px;
+            height: 4px;
+            animation-duration: 10s;
+        }
+
+        /* Medium snowflakes */
+        .snowflake.medium {
+            width: 6px;
+            height: 6px;
+            animation-duration: 15s;
+        }
+
+        /* Large snowflakes */
+        .snowflake.large {
+            width: 8px;
+            height: 8px;
+            animation-duration: 20s;
+        }
+
+        /* Snowfall animation */
+        @keyframes snowfall {
+            0% {
+                transform: translateY(-100px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Add shimmer to snowflakes */
+        .snowflake::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2));
+        }
+
+        /* Some snowflakes with gentle side-to-side movement */
+        @keyframes snowfall-sway {
+            0% {
+                transform: translateY(-100px) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            25% {
+                transform: translateY(25vh) translateX(25px) rotate(90deg);
+            }
+            50% {
+                transform: translateY(50vh) translateX(-25px) rotate(180deg);
+            }
+            75% {
+                transform: translateY(75vh) translateX(25px) rotate(270deg);
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(calc(100vh + 100px)) translateX(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .snowflake.sway {
+            animation-name: snowfall-sway;
+        }
+
+        /* Enhanced crystal reflections for Yuki's theme */
+        .character-yuki .profile-image {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .character-yuki .profile-image::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0) 45%,
+                rgba(255, 255, 255, 0.5) 50%,
+                rgba(255, 255, 255, 0) 55%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            animation: sparkle 5s infinite linear;
+            transform: rotate(25deg);
+        }
+
+        @keyframes sparkle {
+            0% { transform: rotate(25deg) translateX(-100%); }
+            100% { transform: rotate(25deg) translateX(100%); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .characters {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 10px;
+                justify-content: flex-start;
+            }
+            
+            .character-btn {
+                flex: 0 0 auto;
+                padding: 0.6rem 1rem;
+                font-size: 1rem;
+            }
+            
+            .character-profile {
+                order: -1;
+            }
+            
+            .profile-image {
+                width: 120px;
+                height: 120px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -23,7 +925,26 @@
         <div class="status-message">
             <span class="real-time-indicator"></span>
             <span id="connection-status">Real-time connection active</span>
+            <span class="music-state-indicator humility">Humility</span>
         </div>
+        
+        <!-- Music player -->
+        <div class="music-controls">
+            <button id="toggle-music" class="music-toggle">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <span id="music-status">Music: On</span>
+        </div>
+        
+        <!-- Snow container for Yuki -->
+        <div id="snow-container" class="snow-container"></div>
+        
+        <!-- Audio elements (hidden) -->
+        <audio id="blackjack-humility" src="humility.mp3" loop></audio>
+        <audio id="blackjack-bravery" src="bravery.mp3" loop></audio>
+        <audio id="yuki-audio" src="yuki.mp3" loop></audio>
+        <audio id="snaps-audio" src="snaps.mp3" loop></audio>
+        <audio id="flowey-audio" src="flowey.mp3" loop></audio>
         
         <div id="character-display" class="character-display">
             <div class="loading">
@@ -66,6 +987,214 @@
         
         // Object to store all character data 
         const cachedCharacters = {};
+        
+        // Music player variables
+        const audioElements = {
+            blackjackHumility: document.getElementById('blackjack-humility'),
+            blackjackBravery: document.getElementById('blackjack-bravery'),
+            yuki: document.getElementById('yuki-audio'),
+            snaps: document.getElementById('snaps-audio'),
+            flowey: document.getElementById('flowey-audio')
+        };
+        
+        // Track current audio position
+        let currentAudioTime = 0;
+        let lastActiveAudio = null;
+        
+        let isMusicMuted = false;
+        let blackjackMusicState = 'humility';
+        let animationTimeoutId;
+        let snowflakes = []; // To store snowflake elements
+        
+        // Toggle music button
+        const toggleMusicBtn = document.getElementById('toggle-music');
+        const musicStatus = document.getElementById('music-status');
+        
+        toggleMusicBtn.addEventListener('click', function() {
+            isMusicMuted = !isMusicMuted;
+            
+            if (isMusicMuted) {
+                // If music is playing, save the current position before pausing
+                saveCurrentAudioTime();
+                pauseAllMusic();
+                toggleMusicBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                musicStatus.textContent = 'Music: Off';
+                toggleMusicBtn.classList.add('muted');
+            } else {
+                toggleMusicBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                musicStatus.textContent = 'Music: On';
+                toggleMusicBtn.classList.remove('muted');
+                
+                // Resume playing from the saved position
+                playCharacterMusic(currentCharacter);
+            }
+        });
+        
+        // Save current audio time position
+        function saveCurrentAudioTime() {
+            for (const [key, audio] of Object.entries(audioElements)) {
+                if (!audio.paused) {
+                    currentAudioTime = audio.currentTime;
+                    lastActiveAudio = key;
+                    break;
+                }
+            }
+        }
+        
+        // Music control functions
+        function pauseAllMusic() {
+            for (const audio of Object.values(audioElements)) {
+                if (!audio.paused) {
+                    audio.pause();
+                }
+            }
+        }
+        
+        function playCharacterMusic(character, preserveTime = true) {
+            if (isMusicMuted) return;
+            
+            // Save time position from current playing track
+            if (preserveTime) {
+                saveCurrentAudioTime();
+            }
+            
+            // Pause all currently playing music
+            pauseAllMusic();
+            
+            // Play the appropriate music for the selected character
+            // And set the time position to continue from the previous track
+            switch(character) {
+                case 'blackjack':
+                    if (blackjackMusicState === 'humility') {
+                        audioElements.blackjackHumility.currentTime = currentAudioTime;
+                        audioElements.blackjackHumility.play().catch(e => console.log("Audio play failed:", e));
+                    } else {
+                        audioElements.blackjackBravery.currentTime = currentAudioTime;
+                        audioElements.blackjackBravery.play().catch(e => console.log("Audio play failed:", e));
+                    }
+                    startBlackjackMusicCycle();
+                    break;
+                case 'yuki':
+                    audioElements.yuki.currentTime = currentAudioTime;
+                    audioElements.yuki.play().catch(e => console.log("Audio play failed:", e));
+                    clearTimeout(animationTimeoutId);
+                    break;
+                case 'snaps':
+                    audioElements.snaps.currentTime = currentAudioTime;
+                    audioElements.snaps.play().catch(e => console.log("Audio play failed:", e));
+                    clearTimeout(animationTimeoutId);
+                    break;
+                case 'flowey':
+                    audioElements.flowey.currentTime = currentAudioTime;
+                    audioElements.flowey.play().catch(e => console.log("Audio play failed:", e));
+                    clearTimeout(animationTimeoutId);
+                    break;
+            }
+        }
+        
+        // Update the music state indicator
+        function updateMusicStateDisplay() {
+            const indicator = document.querySelector('.music-state-indicator');
+            if (indicator) {
+                // Change content and styling
+                indicator.textContent = blackjackMusicState.charAt(0).toUpperCase() + blackjackMusicState.slice(1);
+                indicator.className = `music-state-indicator ${blackjackMusicState}`;
+            }
+        }
+        
+        // Blackjack's music and theme cycle - 20 seconds
+        function startBlackjackMusicCycle() {
+            clearTimeout(animationTimeoutId);
+            
+            // 20-second cycle for each state
+            animationTimeoutId = setTimeout(() => {
+                if (currentCharacter === 'blackjack' && !isMusicMuted) {
+                    // Save current time position before switching
+                    saveCurrentAudioTime();
+                    
+                    // Switch the state and apply theme
+                    if (blackjackMusicState === 'humility') {
+                        blackjackMusicState = 'bravery';
+                        
+                        // Apply bravery theme
+                        const characterElements = document.querySelectorAll('.character-blackjack');
+                        characterElements.forEach(el => {
+                            el.classList.remove('humility-state');
+                            el.classList.add('bravery-state');
+                        });
+                        
+                        // Switch music tracks preserving position
+                        audioElements.blackjackBravery.currentTime = currentAudioTime;
+                        audioElements.blackjackHumility.pause();
+                        audioElements.blackjackBravery.play().catch(e => console.log("Audio play failed:", e));
+                    } else {
+                        blackjackMusicState = 'humility';
+                        
+                        // Apply humility theme
+                        const characterElements = document.querySelectorAll('.character-blackjack');
+                        characterElements.forEach(el => {
+                            el.classList.remove('bravery-state');
+                            el.classList.add('humility-state');
+                        });
+                        
+                        // Switch music tracks preserving position
+                        audioElements.blackjackHumility.currentTime = currentAudioTime;
+                        audioElements.blackjackBravery.pause();
+                        audioElements.blackjackHumility.play().catch(e => console.log("Audio play failed:", e));
+                    }
+                    
+                    // Update the state display
+                    updateMusicStateDisplay();
+                }
+                
+                // Continue the cycle
+                startBlackjackMusicCycle();
+            }, 10000); // 20 seconds per state
+        }
+        
+        // Snow effect for Yuki
+        function createSnowflakes() {
+            const snowContainer = document.getElementById('snow-container');
+            snowContainer.innerHTML = ''; // Clear existing snowflakes
+            
+            // Create 50 snowflakes with different sizes and speeds
+            for (let i = 0; i < 50; i++) {
+                const snowflake = document.createElement('div');
+                
+                // Randomize snowflake properties
+                const size = Math.random() < 0.3 ? 'small' : (Math.random() < 0.7 ? 'medium' : 'large');
+                const sway = Math.random() < 0.4; // 40% chance of swaying movement
+                const left = Math.random() * 100; // Random horizontal position (0-100%)
+                const animationDelay = Math.random() * 20; // Random delay (0-20s)
+                
+                // Set snowflake classes and styles
+                snowflake.className = `snowflake ${size}${sway ? ' sway' : ''}`;
+                snowflake.style.left = `${left}%`;
+                snowflake.style.animationDelay = `${animationDelay}s`;
+                
+                // Add to container
+                snowContainer.appendChild(snowflake);
+                snowflakes.push(snowflake);
+            }
+        }
+        
+        // Toggle snow effect based on character
+        function toggleSnowEffect(character) {
+            const snowContainer = document.getElementById('snow-container');
+            
+            if (character === 'yuki') {
+                // Create snowflakes if they don't exist yet
+                if (snowflakes.length === 0) {
+                    createSnowflakes();
+                }
+                
+                // Show snow
+                snowContainer.classList.add('active');
+            } else {
+                // Hide snow
+                snowContainer.classList.remove('active');
+            }
+        }
         
         // Initialize default character data
         const defaultCharacters = {
@@ -186,8 +1315,31 @@
                 // Display the initial character
                 renderCharacter(cachedCharacters[currentCharacter]);
                 
+                // Initialize Blackjack's theme
+                if (currentCharacter === 'blackjack') {
+                    // Add appropriate state class
+                    const characterElements = document.querySelectorAll('.character-blackjack');
+                    characterElements.forEach(el => {
+                        el.classList.add(`${blackjackMusicState}-state`);
+                    });
+                    
+                    // Update the state display
+                    updateMusicStateDisplay();
+                }
+                
                 // Set up real-time listeners for all characters
                 setupRealtimeListeners();
+                
+                // Start playing music for initial character
+                playCharacterMusic(currentCharacter, false); // Don't preserve time on initial load
+                
+                // Set up Blackjack's music/theme cycle
+                if (currentCharacter === 'blackjack') {
+                    startBlackjackMusicCycle();
+                }
+                
+                // Initialize snow for Yuki (if selected)
+                toggleSnowEffect(currentCharacter);
             } catch (error) {
                 console.error('Error initializing Firebase data:', error);
                 document.getElementById('connection-status').textContent = 'Connection error';
@@ -229,11 +1381,20 @@
                 document.querySelector('.character-btn.active').classList.remove('active');
                 e.target.classList.add('active');
                 
+                // Save current audio time before changing character
+                saveCurrentAudioTime();
+                
                 // Update current character
                 currentCharacter = e.target.getAttribute('data-character');
                 
                 // No loading screen - display immediately from cache
                 renderCharacter(cachedCharacters[currentCharacter]);
+                
+                // Toggle snow effect based on character
+                toggleSnowEffect(currentCharacter);
+                
+                // Play the character's music preserving the time position
+                playCharacterMusic(currentCharacter);
             });
         });
         
@@ -291,8 +1452,12 @@
             // Determine character class for theming
             const characterClass = `character-${currentCharacter}`;
             
+            // Special class for Blackjack's state
+            const blackjackStateClass = currentCharacter === 'blackjack' ? 
+                `${blackjackMusicState}-state` : '';
+            
             characterDisplay.innerHTML = `
-                <div class="character-profile ${characterClass}">
+                <div class="character-profile ${characterClass} ${blackjackStateClass}">
                     <img src="${character.profilePicture || 'default-avatar.png'}" alt="${character.name}" class="profile-image">
                     <h2 class="character-name">${character.name}</h2>
                     <div class="stat">
@@ -309,7 +1474,7 @@
                     </div>
                 </div>
                 
-                <div class="character-stats ${characterClass}">
+                <div class="character-stats ${characterClass} ${blackjackStateClass}">
                     <h2><i class="fas fa-chart-bar"></i> Stats</h2>
                     <div class="stat">
                         <span class="stat-name"><i class="fas fa-heart"></i> HP</span>
@@ -336,7 +1501,7 @@
                     </div>
                 </div>
                 
-                <div class="character-inventory ${characterClass}">
+                <div class="character-inventory ${characterClass} ${blackjackStateClass}">
                     <h2><i class="fas fa-suitcase"></i> Inventory</h2>
                     ${character.inventory && character.inventory.length > 0 
                         ? character.inventory.map(item => `
@@ -348,7 +1513,7 @@
                     }
                 </div>
                 
-                <div class="character-magic ${characterClass}">
+                <div class="character-magic ${characterClass} ${blackjackStateClass}">
                     <h2><i class="fas fa-hat-wizard"></i> Magic Spells</h2>
                     ${character.spells && character.spells.length > 0 
                         ? character.spells.map(spell => `
@@ -368,6 +1533,17 @@
             
             // Add special effect to primary stat
             addPrimaryStatEffect(character);
+            
+            // Update state indicator if on Blackjack
+            if (currentCharacter === 'blackjack') {
+                updateMusicStateDisplay();
+                const indicator = document.querySelector('.music-state-indicator');
+                if (indicator) indicator.style.display = 'inline-block';
+            } else {
+                // Hide state indicator for other characters
+                const indicator = document.querySelector('.music-state-indicator');
+                if (indicator) indicator.style.display = 'none';
+            }
             
             // Add animation to stats when they change
             setTimeout(() => {
@@ -390,6 +1566,20 @@
                 }
             }, 10);
         }
+        
+        // Handle page visibility changes to pause/resume when tab is inactive
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Page is hidden, save audio time and pause
+                saveCurrentAudioTime();
+                pauseAllMusic();
+            } else {
+                // Page is visible again, resume playing if not muted
+                if (!isMusicMuted && currentAudioTime > 0) {
+                    playCharacterMusic(currentCharacter);
+                }
+            }
+        });
         
         // Initialize the application
         initializeFirebaseData();
