@@ -1193,7 +1193,10 @@
         </div>
         
         <!-- Troubleshooting message for GitHub audio issue -->
-
+        <div id="troubleshoot-message" class="troubleshoot-message">
+            <i class="fas fa-exclamation-triangle"></i> 
+            Flowey's audio may not load on GitHub Pages due to CORS restrictions or file format. Try using a .mp3 format and check your path is correct (flowey.mp3 in the same directory).
+        </div>
         
         <!-- Snow container for Yuki -->
         <div id="snow-container" class="snow-container"></div>
@@ -1230,6 +1233,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
+        // Make sure DOM is fully loaded before accessing elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize everything after DOM is loaded
+            initializeApp();
+        });
+        
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAeO0N50Qfu9VDMQ-6TKG54kPr_KRxQKJM",
@@ -1347,74 +1356,110 @@
         
         // Check if audio file can load and show troubleshooting message if needed
         function checkAudioLoading() {
-            // Listen for error on Flowey's audio
-            audioElements.flowey.addEventListener('error', function() {
-                floweyAudioFailed = true;
-                document.getElementById('troubleshoot-message').classList.add('show');
-            });
-            
-            // Also test with a fetch request if on GitHub pages
-            if (window.location.hostname.includes('github.io')) {
-                fetch('flowey.mp3')
-                    .then(response => {
-                        if (!response.ok) {
-                            floweyAudioFailed = true;
-                            document.getElementById('troubleshoot-message').classList.add('show');
-                        }
-                    })
-                    .catch(() => {
+            try {
+                const floweyAudio = document.getElementById('flowey-audio');
+                if (floweyAudio) {
+                    // Listen for error on Flowey's audio
+                    floweyAudio.addEventListener('error', function() {
                         floweyAudioFailed = true;
-                        document.getElementById('troubleshoot-message').classList.add('show');
+                        const troubleshootMsg = document.getElementById('troubleshoot-message');
+                        if (troubleshootMsg) {
+                            troubleshootMsg.classList.add('show');
+                        }
                     });
+                } else {
+                    console.warn("Flowey audio element not found");
+                }
+                
+                // Also test with a fetch request if on GitHub pages
+                if (window.location.hostname.includes('github.io')) {
+                    fetch('flowey.mp3')
+                        .then(response => {
+                            if (!response.ok) {
+                                floweyAudioFailed = true;
+                                const troubleshootMsg = document.getElementById('troubleshoot-message');
+                                if (troubleshootMsg) {
+                                    troubleshootMsg.classList.add('show');
+                                }
+                            }
+                        })
+                        .catch(() => {
+                            floweyAudioFailed = true;
+                            const troubleshootMsg = document.getElementById('troubleshoot-message');
+                            if (troubleshootMsg) {
+                                troubleshootMsg.classList.add('show');
+                            }
+                        });
+                }
+            } catch (error) {
+                console.error("Error in checkAudioLoading:", error);
             }
         }
         
-        // Audio crossfade function
-        function crossfadeAudio(fadeOutAudio, fadeInAudio, duration = CROSSFADE_DURATION) {
-            // Clear any existing crossfade
-            if (crossfadeTimeoutId) {
-                clearInterval(crossfadeTimeoutId);
-            }
-            
-            // Start positions must match
-            fadeInAudio.currentTime = fadeOutAudio.currentTime;
-            
-            // Set both to current volume
-            const startVolume = currentVolume;
-            fadeOutAudio.volume = startVolume;
-            
-            // Start the new audio at 0 volume
-            fadeInAudio.volume = 0;
-            fadeInAudio.play().catch(e => console.log("Audio play failed:", e));
-            
-            // Number of steps for the crossfade
-            const steps = 20;
-            const stepTime = duration / steps;
-            const volumeStep = startVolume / steps;
-            
-            let currentStep = 0;
-            
-            // Create interval for the crossfade
-            crossfadeTimeoutId = setInterval(() => {
-                currentStep++;
-                
-                // Calculate new volumes
-                const outVol = Math.max(0, startVolume - (volumeStep * currentStep));
-                const inVol = Math.min(startVolume, volumeStep * currentStep);
-                
-                // Set new volumes
-                fadeOutAudio.volume = outVol;
-                fadeInAudio.volume = inVol;
-                
-                // Finish crossfade
-                if (currentStep >= steps) {
-                    fadeOutAudio.pause();
-                    fadeOutAudio.volume = startVolume; // Reset volume for next time
-                    clearInterval(crossfadeTimeoutId);
-                    crossfadeTimeoutId = null;
+                // Audio crossfade function
+                function crossfadeAudio(fadeOutAudio, fadeInAudio, duration = CROSSFADE_DURATION) {
+                    try {
+                        // Validate inputs
+                        if (!fadeOutAudio || !fadeInAudio) {
+                            console.warn("Invalid audio elements for crossfade");
+                            return;
+                        }
+                        
+                        // Clear any existing crossfade
+                        if (crossfadeTimeoutId) {
+                            clearInterval(crossfadeTimeoutId);
+                        }
+                        
+                        // Start positions must match
+                        fadeInAudio.currentTime = fadeOutAudio.currentTime;
+                        
+                        // Set both to current volume
+                        const startVolume = currentVolume;
+                        fadeOutAudio.volume = startVolume;
+                        
+                        // Start the new audio at 0 volume
+                        fadeInAudio.volume = 0;
+                        
+                        // Handle autoplay restrictions
+                        const playPromise = fadeInAudio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {
+                                console.log("Audio crossfade failed:", e);
+                                return;
+                            });
+                        }
+                        
+                        // Number of steps for the crossfade
+                        const steps = 20;
+                        const stepTime = duration / steps;
+                        const volumeStep = startVolume / steps;
+                        
+                        let currentStep = 0;
+                        
+                        // Create interval for the crossfade
+                        crossfadeTimeoutId = setInterval(() => {
+                            currentStep++;
+                            
+                            // Calculate new volumes
+                            const outVol = Math.max(0, startVolume - (volumeStep * currentStep));
+                            const inVol = Math.min(startVolume, volumeStep * currentStep);
+                            
+                            // Set new volumes
+                            fadeOutAudio.volume = outVol;
+                            fadeInAudio.volume = inVol;
+                            
+                            // Finish crossfade
+                            if (currentStep >= steps) {
+                                fadeOutAudio.pause();
+                                fadeOutAudio.volume = startVolume; // Reset volume for next time
+                                clearInterval(crossfadeTimeoutId);
+                                crossfadeTimeoutId = null;
+                            }
+                        }, stepTime);
+                    } catch (error) {
+                        console.error("Error in crossfadeAudio:", error);
+                    }
                 }
-            }, stepTime);
-        }
         
         // Toggle music button
         const toggleMusicBtn = document.getElementById('toggle-music');
@@ -1440,86 +1485,123 @@
             }
         });
         
-        // Save current audio time position
-        function saveCurrentAudioTime() {
-            for (const [key, audio] of Object.entries(audioElements)) {
-                if (!audio.paused) {
-                    currentAudioTime = audio.currentTime;
-                    lastActiveAudio = key;
-                    break;
-                }
-            }
-        }
-        
-        // Music control functions
-        function pauseAllMusic() {
-            if (crossfadeTimeoutId) {
-                clearInterval(crossfadeTimeoutId);
-                crossfadeTimeoutId = null;
-            }
-            
-            for (const audio of Object.values(audioElements)) {
-                if (!audio.paused) {
-                    audio.pause();
-                }
-            }
-        }
-        
-        function playCharacterMusic(character, preserveTime = true) {
-            if (isMusicMuted) return;
-            
-            // Save time position from current playing track
-            if (preserveTime) {
-                saveCurrentAudioTime();
-            }
-            
-            // Pause all currently playing music
-            pauseAllMusic();
-            
-            // Play the appropriate music for the selected character
-            // And set the time position to continue from the previous track
-            switch(character) {
-                case 'blackjack':
-                    if (blackjackMusicState === 'humility') {
-                        audioElements.blackjackHumility.currentTime = currentAudioTime;
-                        audioElements.blackjackHumility.volume = currentVolume;
-                        audioElements.blackjackHumility.play().catch(e => console.log("Audio play failed:", e));
-                    } else {
-                        audioElements.blackjackBravery.currentTime = currentAudioTime;
-                        audioElements.blackjackBravery.volume = currentVolume;
-                        audioElements.blackjackBravery.play().catch(e => console.log("Audio play failed:", e));
+                // Save current audio time position
+                function saveCurrentAudioTime() {
+                    try {
+                        for (const [key, audio] of Object.entries(audioElements)) {
+                            if (audio && !audio.paused) {
+                                currentAudioTime = audio.currentTime;
+                                lastActiveAudio = key;
+                                break;
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error in saveCurrentAudioTime:", error);
                     }
-                    startBlackjackMusicCycle();
-                    break;
-                case 'yuki':
-                    audioElements.yuki.currentTime = currentAudioTime;
-                    audioElements.yuki.volume = currentVolume;
-                    audioElements.yuki.play().catch(e => console.log("Audio play failed:", e));
-                    clearTimeout(animationTimeoutId);
-                    break;
-                case 'snaps':
-                    audioElements.snaps.currentTime = currentAudioTime;
-                    audioElements.snaps.volume = currentVolume;
-                    audioElements.snaps.play().catch(e => console.log("Audio play failed:", e));
-                    clearTimeout(animationTimeoutId);
-                    break;
-                case 'flowey':
-                    // Check if audio failed before attempting to play
-                    if (!floweyAudioFailed) {
-                        audioElements.flowey.currentTime = currentAudioTime;
-                        audioElements.flowey.volume = currentVolume;
-                        audioElements.flowey.play().catch(e => {
-                            console.log("Flowey audio play failed:", e);
-                            floweyAudioFailed = true;
-                            document.getElementById('troubleshoot-message').classList.add('show');
-                        });
-                    } else {
-                        document.getElementById('troubleshoot-message').classList.add('show');
+                }
+                
+                // Music control functions
+                function pauseAllMusic() {
+                    try {
+                        if (crossfadeTimeoutId) {
+                            clearInterval(crossfadeTimeoutId);
+                            crossfadeTimeoutId = null;
+                        }
+                        
+                        for (const audio of Object.values(audioElements)) {
+                            if (audio && !audio.paused) {
+                                audio.pause();
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error in pauseAllMusic:", error);
                     }
-                    clearTimeout(animationTimeoutId);
-                    break;
-            }
-        }
+                }
+                
+                function playCharacterMusic(character, preserveTime = true) {
+                    try {
+                        if (isMusicMuted) return;
+                        
+                        // Save time position from current playing track
+                        if (preserveTime) {
+                            saveCurrentAudioTime();
+                        }
+                        
+                        // Pause all currently playing music
+                        pauseAllMusic();
+                        
+                        // Play the appropriate music for the selected character
+                        // And set the time position to continue from the previous track
+                        switch(character) {
+                            case 'blackjack':
+                                if (blackjackMusicState === 'humility' && audioElements.blackjackHumility) {
+                                    audioElements.blackjackHumility.currentTime = currentAudioTime;
+                                    audioElements.blackjackHumility.volume = currentVolume;
+                                    const playPromise = audioElements.blackjackHumility.play();
+                                    if (playPromise !== undefined) {
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
+                                    }
+                                } else if (audioElements.blackjackBravery) {
+                                    audioElements.blackjackBravery.currentTime = currentAudioTime;
+                                    audioElements.blackjackBravery.volume = currentVolume;
+                                    const playPromise = audioElements.blackjackBravery.play();
+                                    if (playPromise !== undefined) {
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
+                                    }
+                                }
+                                startBlackjackMusicCycle();
+                                break;
+                            case 'yuki':
+                                if (audioElements.yuki) {
+                                    audioElements.yuki.currentTime = currentAudioTime;
+                                    audioElements.yuki.volume = currentVolume;
+                                    const playPromise = audioElements.yuki.play();
+                                    if (playPromise !== undefined) {
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
+                                    }
+                                }
+                                clearTimeout(animationTimeoutId);
+                                break;
+                            case 'snaps':
+                                if (audioElements.snaps) {
+                                    audioElements.snaps.currentTime = currentAudioTime;
+                                    audioElements.snaps.volume = currentVolume;
+                                    const playPromise = audioElements.snaps.play();
+                                    if (playPromise !== undefined) {
+                                        playPromise.catch(e => console.log("Audio play failed:", e));
+                                    }
+                                }
+                                clearTimeout(animationTimeoutId);
+                                break;
+                            case 'flowey':
+                                // Check if audio failed before attempting to play
+                                if (!floweyAudioFailed && audioElements.flowey) {
+                                    audioElements.flowey.currentTime = currentAudioTime;
+                                    audioElements.flowey.volume = currentVolume;
+                                    const playPromise = audioElements.flowey.play();
+                                    if (playPromise !== undefined) {
+                                        playPromise.catch(e => {
+                                            console.log("Flowey audio play failed:", e);
+                                            floweyAudioFailed = true;
+                                            const troubleshootMsg = document.getElementById('troubleshoot-message');
+                                            if (troubleshootMsg) {
+                                                troubleshootMsg.classList.add('show');
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    const troubleshootMsg = document.getElementById('troubleshoot-message');
+                                    if (troubleshootMsg) {
+                                        troubleshootMsg.classList.add('show');
+                                    }
+                                }
+                                clearTimeout(animationTimeoutId);
+                                break;
+                        }
+                    } catch (error) {
+                        console.error("Error in playCharacterMusic:", error);
+                    }
+                }
         
         // Update the music state indicator
         function updateMusicStateDisplay() {
@@ -1531,70 +1613,78 @@
             }
         }
         
-        // Blackjack's music and theme cycle with crossfade - 20 seconds
-        function startBlackjackMusicCycle() {
-            clearTimeout(animationTimeoutId);
-            
-            // 20-second cycle for each state
-            animationTimeoutId = setTimeout(() => {
-                if (currentCharacter === 'blackjack' && !isMusicMuted) {
-                    // Switch the state and apply theme
-                    if (blackjackMusicState === 'humility') {
-                        blackjackMusicState = 'bravery';
+                // Blackjack's music and theme cycle with crossfade - 20 seconds
+                function startBlackjackMusicCycle() {
+                    try {
+                        clearTimeout(animationTimeoutId);
                         
-                        // Apply bravery theme
-                        const characterElements = document.querySelectorAll('.character-blackjack');
-                        characterElements.forEach(el => {
-                            el.classList.remove('humility-state');
-                            el.classList.add('bravery-state');
-                        });
-                        
-                        // Update profile picture to blackjack2.png
-                        if (cachedCharacters.blackjack) {
-                            cachedCharacters.blackjack.profilePicture = 'blackjack2.png';
-                            // Re-render the character to update the profile picture
-                            renderCharacter(cachedCharacters.blackjack);
-                        }
-                        
-                        // Crossfade the music tracks
-                        crossfadeAudio(
-                            audioElements.blackjackHumility, 
-                            audioElements.blackjackBravery, 
-                            CROSSFADE_DURATION
-                        );
-                    } else {
-                        blackjackMusicState = 'humility';
-                        
-                        // Apply humility theme
-                        const characterElements = document.querySelectorAll('.character-blackjack');
-                        characterElements.forEach(el => {
-                            el.classList.remove('bravery-state');
-                            el.classList.add('humility-state');
-                        });
-                        
-                        // Update profile picture to blackjack.png
-                        if (cachedCharacters.blackjack) {
-                            cachedCharacters.blackjack.profilePicture = 'blackjack.png';
-                            // Re-render the character to update the profile picture
-                            renderCharacter(cachedCharacters.blackjack);
-                        }
-                        
-                        // Crossfade the music tracks
-                        crossfadeAudio(
-                            audioElements.blackjackBravery, 
-                            audioElements.blackjackHumility, 
-                            CROSSFADE_DURATION
-                        );
+                        // 20-second cycle for each state
+                        animationTimeoutId = setTimeout(() => {
+                            if (currentCharacter === 'blackjack' && !isMusicMuted) {
+                                // Switch the state and apply theme
+                                if (blackjackMusicState === 'humility') {
+                                    blackjackMusicState = 'bravery';
+                                    
+                                    // Apply bravery theme
+                                    const characterElements = document.querySelectorAll('.character-blackjack');
+                                    characterElements.forEach(el => {
+                                        el.classList.remove('humility-state');
+                                        el.classList.add('bravery-state');
+                                    });
+                                    
+                                    // Update profile picture to blackjack2.png
+                                    if (cachedCharacters.blackjack) {
+                                        cachedCharacters.blackjack.profilePicture = 'blackjack2.png';
+                                        // Re-render the character to update the profile picture
+                                        renderCharacter(cachedCharacters.blackjack);
+                                    }
+                                    
+                                    // Crossfade the music tracks
+                                    if (audioElements.blackjackHumility && audioElements.blackjackBravery) {
+                                        crossfadeAudio(
+                                            audioElements.blackjackHumility, 
+                                            audioElements.blackjackBravery, 
+                                            CROSSFADE_DURATION
+                                        );
+                                    }
+                                } else {
+                                    blackjackMusicState = 'humility';
+                                    
+                                    // Apply humility theme
+                                    const characterElements = document.querySelectorAll('.character-blackjack');
+                                    characterElements.forEach(el => {
+                                        el.classList.remove('bravery-state');
+                                        el.classList.add('humility-state');
+                                    });
+                                    
+                                    // Update profile picture to blackjack.png
+                                    if (cachedCharacters.blackjack) {
+                                        cachedCharacters.blackjack.profilePicture = 'blackjack.png';
+                                        // Re-render the character to update the profile picture
+                                        renderCharacter(cachedCharacters.blackjack);
+                                    }
+                                    
+                                    // Crossfade the music tracks
+                                    if (audioElements.blackjackBravery && audioElements.blackjackHumility) {
+                                        crossfadeAudio(
+                                            audioElements.blackjackBravery, 
+                                            audioElements.blackjackHumility, 
+                                            CROSSFADE_DURATION
+                                        );
+                                    }
+                                }
+                                
+                                // Update the state display
+                                updateMusicStateDisplay();
+                            }
+                            
+                            // Continue the cycle
+                            startBlackjackMusicCycle();
+                        }, 20000); // 20 seconds per state
+                    } catch (error) {
+                        console.error("Error in startBlackjackMusicCycle:", error);
                     }
-                    
-                    // Update the state display
-                    updateMusicStateDisplay();
                 }
-                
-                // Continue the cycle
-                startBlackjackMusicCycle();
-            }, 20000); // 20 seconds per state
-        }
         
         // Snow effect for Yuki
         function createSnowflakes() {
@@ -1661,49 +1751,61 @@
         
         // Toggle character effects based on selected character
         function toggleCharacterEffects(character) {
-            // Snow effect for Yuki
-            const snowContainer = document.getElementById('snow-container');
-            if (character === 'yuki') {
-                // Create snowflakes if they don't exist yet
-                if (snowflakes.length === 0) {
-                    createSnowflakes();
+            try {
+                // Snow effect for Yuki
+                const snowContainer = document.getElementById('snow-container');
+                if (snowContainer) {
+                    if (character === 'yuki') {
+                        // Create snowflakes if they don't exist yet
+                        if (snowflakes.length === 0) {
+                            createSnowflakes();
+                        }
+                        snowContainer.classList.add('active');
+                    } else {
+                        snowContainer.classList.remove('active');
+                    }
                 }
-                snowContainer.classList.add('active');
-            } else {
-                snowContainer.classList.remove('active');
-            }
-            
-            // Petal effect for Flowey
-            const petalContainer = document.getElementById('petal-container');
-            if (character === 'flowey') {
-                // Create petals if they don't exist yet
-                if (petals.length === 0) {
-                    createPetals();
-                }
-                petalContainer.classList.add('active');
                 
-                // Show troubleshooting message if audio failed
-                if (floweyAudioFailed) {
-                    document.getElementById('troubleshoot-message').classList.add('show');
+                // Petal effect for Flowey
+                const petalContainer = document.getElementById('petal-container');
+                if (petalContainer) {
+                    if (character === 'flowey') {
+                        // Create petals if they don't exist yet
+                        if (petals.length === 0) {
+                            createPetals();
+                        }
+                        petalContainer.classList.add('active');
+                        
+                        // Show troubleshooting message if audio failed
+                        const troubleshootMsg = document.getElementById('troubleshoot-message');
+                        if (troubleshootMsg && floweyAudioFailed) {
+                            troubleshootMsg.classList.add('show');
+                        }
+                    } else {
+                        petalContainer.classList.remove('active');
+                        const troubleshootMsg = document.getElementById('troubleshoot-message');
+                        if (troubleshootMsg) {
+                            troubleshootMsg.classList.remove('show');
+                        }
+                    }
                 }
-            } else {
-                petalContainer.classList.remove('active');
-                document.getElementById('troubleshoot-message').classList.remove('show');
-            }
-            
-            // Add neon borders to Snaps' elements
-            if (character === 'snaps') {
-                const snapsElements = document.querySelectorAll('.character-snaps');
-                snapsElements.forEach(el => {
-                    // Remove any existing neon borders to prevent duplicates
-                    const existingBorders = el.querySelectorAll('.neon-border');
-                    existingBorders.forEach(border => border.remove());
-                    
-                    // Add new neon border
-                    const border = document.createElement('div');
-                    border.className = 'neon-border';
-                    el.appendChild(border);
-                });
+                
+                // Add neon borders to Snaps' elements
+                if (character === 'snaps') {
+                    const snapsElements = document.querySelectorAll('.character-snaps');
+                    snapsElements.forEach(el => {
+                        // Remove any existing neon borders to prevent duplicates
+                        const existingBorders = el.querySelectorAll('.neon-border');
+                        existingBorders.forEach(border => border.remove());
+                        
+                        // Add new neon border
+                        const border = document.createElement('div');
+                        border.className = 'neon-border';
+                        el.appendChild(border);
+                    });
+                }
+            } catch (error) {
+                console.error("Error in toggleCharacterEffects:", error);
             }
         }
         
@@ -1961,138 +2063,149 @@
             }, 10);
         }
         
-        // Function to render character data
-        function renderCharacter(character) {
-            const characterDisplay = document.getElementById('character-display');
-            const manaPercentage = Math.round((character.mana / character.maxMana) * 100);
-            
-            // Determine character class for theming
-            const characterClass = `character-${currentCharacter}`;
-            
-            // Special class for Blackjack's state
-            const blackjackStateClass = currentCharacter === 'blackjack' ? 
-                `${blackjackMusicState}-state` : '';
-            
-            // Determine profile picture for Blackjack based on state
-            let profilePicture = character.profilePicture || 'default-avatar.png';
-            if (currentCharacter === 'blackjack') {
-                if (blackjackMusicState === 'bravery') {
-                    profilePicture = 'blackjack2.png';
-                } else {
-                    profilePicture = 'blackjack.png';
-                }
-            }
-            
-            characterDisplay.innerHTML = `
-                <div class="character-profile ${characterClass} ${blackjackStateClass}">
-                    <img src="${profilePicture}" alt="${character.name}" class="profile-image">
-                    <h2 class="character-name">${character.name}</h2>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-heart"></i> LOVE&nbsp</span>
-                        <span class="stat-value">${character.LOVE}</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-chevron-up"></i> LV&nbsp</span>
-                        <span class="stat-value">${character.LV}</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-coins"></i> G (Gold)&nbsp</span>
-                        <span class="stat-value">${character.G}</span>
-                    </div>
-                </div>
-                
-                <div class="character-stats ${characterClass} ${blackjackStateClass}">
-                    <h2><i class="fas fa-chart-bar"></i> Stats</h2>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-heart"></i> HP</span>
-                        <span class="stat-value">${character.HP}</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-fist-raised"></i> ATK</span>
-                        <span class="stat-value">${character.ATK}</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-shield-alt"></i> DEF</span>
-                        <span class="stat-value">${character.DEF}</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-bolt"></i> PARRY CHANCE</span>
-                        <span class="stat-value">${character["PARRY CHANCE"]}%</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-name"><i class="fas fa-flask"></i> Mana</span>
-                        <span class="stat-value">${character.mana}/${character.maxMana}</span>
-                    </div>
-                    <div class="mana-container">
-                        <div class="mana-bar" style="width: ${manaPercentage}%"></div>
-                    </div>
-                </div>
-                
-                <div class="character-inventory ${characterClass} ${blackjackStateClass}">
-                    <h2><i class="fas fa-suitcase"></i> Inventory</h2>
-                    ${character.inventory && character.inventory.length > 0 
-                        ? character.inventory.map(item => `
-                            <div class="inventory-item">
-                                <span><i class="fas fa-box-open"></i> ${item}</span>
-                            </div>
-                        `).join('') 
-                        : '<div class="inventory-item"><span>No items</span></div>'
-                    }
-                </div>
-                
-                <div class="character-magic ${characterClass} ${blackjackStateClass}">
-                    <h2><i class="fas fa-hat-wizard"></i> Magic Spells</h2>
-                    ${character.spells && character.spells.length > 0 
-                        ? character.spells.map(spell => `
-                            <div class="spell-card">
-                                <div class="spell-header">
-                                    <div class="spell-name">${getElementIcon(spell.element)} ${spell.name}</div>
-                                    <div class="spell-cost"><i class="fas fa-flask"></i> ${spell.manaCost} Mana</div>
+                // Function to render character data
+                function renderCharacter(character) {
+                    try {
+                        const characterDisplay = document.getElementById('character-display');
+                        if (!characterDisplay) return;
+                        
+                        const manaPercentage = Math.round((character.mana / character.maxMana) * 100);
+                        
+                        // Determine character class for theming
+                        const characterClass = `character-${currentCharacter}`;
+                        
+                        // Special class for Blackjack's state
+                        const blackjackStateClass = currentCharacter === 'blackjack' ? 
+                            `${blackjackMusicState}-state` : '';
+                        
+                        // Determine profile picture for Blackjack based on state
+                        let profilePicture = character.profilePicture || 'default-avatar.png';
+                        if (currentCharacter === 'blackjack') {
+                            if (blackjackMusicState === 'bravery') {
+                                profilePicture = 'blackjack2.png';
+                            } else {
+                                profilePicture = 'blackjack.png';
+                            }
+                        }
+                        
+                        characterDisplay.innerHTML = `
+                            <div class="character-profile ${characterClass} ${blackjackStateClass}">
+                                <img src="${profilePicture}" alt="${character.name}" class="profile-image">
+                                <h2 class="character-name">${character.name}</h2>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-heart"></i> LOVE&nbsp</span>
+                                    <span class="stat-value">${character.LOVE}</span>
                                 </div>
-                                <div class="spell-element element-${spell.element}">${spell.element.charAt(0).toUpperCase() + spell.element.slice(1)}</div>
-                                <div class="spell-description">${spell.description}</div>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-chevron-up"></i> LV&nbsp</span>
+                                    <span class="stat-value">${character.LV}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-coins"></i> G (Gold)&nbsp</span>
+                                    <span class="stat-value">${character.G}</span>
+                                </div>
                             </div>
-                        `).join('') 
-                        : '<div class="spell-card"><div class="spell-name">No spells learned yet</div></div>'
+                            
+                            <div class="character-stats ${characterClass} ${blackjackStateClass}">
+                                <h2><i class="fas fa-chart-bar"></i> Stats</h2>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-heart"></i> HP</span>
+                                    <span class="stat-value">${character.HP}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-fist-raised"></i> ATK</span>
+                                    <span class="stat-value">${character.ATK}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-shield-alt"></i> DEF</span>
+                                    <span class="stat-value">${character.DEF}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-bolt"></i> PARRY CHANCE</span>
+                                    <span class="stat-value">${character["PARRY CHANCE"]}%</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-name"><i class="fas fa-flask"></i> Mana</span>
+                                    <span class="stat-value">${character.mana}/${character.maxMana}</span>
+                                </div>
+                                <div class="mana-container">
+                                    <div class="mana-bar" style="width: ${manaPercentage}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="character-inventory ${characterClass} ${blackjackStateClass}">
+                                <h2><i class="fas fa-suitcase"></i> Inventory</h2>
+                                ${character.inventory && character.inventory.length > 0 
+                                    ? character.inventory.map(item => `
+                                        <div class="inventory-item">
+                                            <span><i class="fas fa-box-open"></i> ${item}</span>
+                                        </div>
+                                    `).join('') 
+                                    : '<div class="inventory-item"><span>No items</span></div>'
+                                }
+                            </div>
+                            
+                            <div class="character-magic ${characterClass} ${blackjackStateClass}">
+                                <h2><i class="fas fa-hat-wizard"></i> Magic Spells</h2>
+                                ${character.spells && character.spells.length > 0 
+                                    ? character.spells.map(spell => `
+                                        <div class="spell-card">
+                                            <div class="spell-header">
+                                                <div class="spell-name">${getElementIcon(spell.element)} ${spell.name}</div>
+                                                <div class="spell-cost"><i class="fas fa-flask"></i> ${spell.manaCost} Mana</div>
+                                            </div>
+                                            <div class="spell-element element-${spell.element}">${spell.element.charAt(0).toUpperCase() + spell.element.slice(1)}</div>
+                                            <div class="spell-description">${spell.description}</div>
+                                        </div>
+                                    `).join('') 
+                                    : '<div class="spell-card"><div class="spell-name">No spells learned yet</div></div>'
+                                }
+                            </div>
+                        `;
+                        
+                        // Add special effect to primary stat
+                        addPrimaryStatEffect(character);
+                        
+                        // Update state indicator if on Blackjack
+                        if (currentCharacter === 'blackjack') {
+                            updateMusicStateDisplay();
+                            const indicator = document.querySelector('.music-state-indicator');
+                            if (indicator) indicator.style.display = 'inline-block';
+                        } else {
+                            // Hide state indicator for other characters
+                            const indicator = document.querySelector('.music-state-indicator');
+                            if (indicator) indicator.style.display = 'none';
+                        }
+                        
+                        // Add animation to stats when they change
+                        setTimeout(() => {
+                            document.querySelectorAll('.stat-value').forEach(el => {
+                                if (!el.classList.contains('primary-stat')) {
+                                    el.classList.add('changing');
+                                    setTimeout(() => el.classList.remove('changing'), 1000);
+                                }
+                            });
+                        }, 10);
+                        
+                        // Animate mana bar
+                        setTimeout(() => {
+                            const manaBar = document.querySelector('.mana-bar');
+                            if (manaBar) {
+                                manaBar.style.width = '0%';
+                                setTimeout(() => {
+                                    manaBar.style.width = manaPercentage + '%';
+                                }, 10);
+                            }
+                        }, 10);
+                        
+                        // Apply Snaps' neon effect if needed
+                        if (currentCharacter === 'snaps') {
+                            toggleCharacterEffects('snaps');
+                        }
+                    } catch (error) {
+                        console.error("Error in renderCharacter:", error);
                     }
-                </div>
-            `;
-            
-            // Add special effect to primary stat
-            addPrimaryStatEffect(character);
-            
-            // Update state indicator if on Blackjack
-            if (currentCharacter === 'blackjack') {
-                updateMusicStateDisplay();
-                const indicator = document.querySelector('.music-state-indicator');
-                if (indicator) indicator.style.display = 'inline-block';
-            } else {
-                // Hide state indicator for other characters
-                const indicator = document.querySelector('.music-state-indicator');
-                if (indicator) indicator.style.display = 'none';
-            }
-            
-            // Add animation to stats when they change
-            setTimeout(() => {
-                document.querySelectorAll('.stat-value').forEach(el => {
-                    if (!el.classList.contains('primary-stat')) {
-                        el.classList.add('changing');
-                        setTimeout(() => el.classList.remove('changing'), 1000);
-                    }
-                });
-            }, 10);
-            
-            // Animate mana bar
-            setTimeout(() => {
-                const manaBar = document.querySelector('.mana-bar');
-                if (manaBar) {
-                    manaBar.style.width = '0%';
-                    setTimeout(() => {
-                        manaBar.style.width = manaPercentage + '%';
-                    }, 10);
                 }
-            }, 10);
-        }
         
         // Handle page visibility changes to pause/resume when tab is inactive
         document.addEventListener('visibilitychange', () => {
